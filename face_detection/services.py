@@ -1,6 +1,10 @@
+import io
+
 import cv2
 import face_recognition
 import numpy as np
+from PIL import Image
+from django.core.files.base import ContentFile
 
 from users.models import User
 
@@ -21,12 +25,40 @@ def obtain_tensors_by_video(video):
     return tensors_faces
 
 
-def find_worker(encodings):
+def obtain_worker_image_by_video(video, name):
+    cap = cv2.VideoCapture(video)
+    worker_face = None
+
+    while True:
+        ret, frame = cap.read()
+        if not ret: break
+
+        worker_face = frame
+
+    cap.release()
+
+    worker_face = cv2.cvtColor(worker_face, cv2.COLOR_BGR2RGB)
+    worker_face = Image.fromarray(worker_face)
+
+
+    buffer = io.BytesIO()
+    worker_face.save(buffer, format='JPEG', quality=85)
+    buffer.seek(0)
+    worker_image = ContentFile(buffer.read(), name=f"{name}.jpg")
+
+    return worker_image
+
+
+
+def find_worker(encoding):
     for identifier, tensor_faces in User.objects.values_list('id', 'tensor_faces'):
+
         tensors = np.array(tensor_faces)
+
         for tensor in tensors:
-            result = face_recognition.compare_faces([tensor], encodings[0], tolerance=0.5)
+            result = face_recognition.compare_faces([tensor], np.array(encoding), tolerance=0.5)
 
             if result == np.True_:
-                return identifier
+                return User.objects.get(id=identifier)
+
     return False
