@@ -1,12 +1,12 @@
 
-from face_detection.services import obtain_tensors_by_video, obtain_image_by_video
+from face_detection.services import obtain_tensors_by_video, obtain_worker_image_by_video
 from users.models import User
 
 
 def create_user(user, video):
     faces = obtain_tensors_by_video(video)
 
-    worker_image = obtain_image_by_video(video, user['username'])
+    worker_image = obtain_worker_image_by_video(video, user['username'])
 
 
     new_user = User()
@@ -15,7 +15,7 @@ def create_user(user, video):
     new_user.last_name = user['last_name']
     new_user.email = user['email']
     new_user.username = user['username']
-    new_user.password = user['password']
+    new_user.set_password(user['password'])
     new_user.tensor_faces = faces
     new_user.face = worker_image
 
