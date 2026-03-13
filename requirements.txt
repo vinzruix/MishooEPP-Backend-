@@ -10,3 +10,5 @@ psycopg2-binary
 python-dotenv
 opencv-python
 face-recognition
+numpy
+pillow
