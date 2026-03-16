@@ -58,7 +58,8 @@ INSTALLED_APPS = [
     'users',
     'rest_framework',
     'corsheaders',
-    'face_detection'
+    'face_detection',
+    'sensors',
 ]
 
 MIDDLEWARE = [

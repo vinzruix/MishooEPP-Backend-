@@ -50,8 +50,3 @@ class UserDetailAPIView(APIView):
 
 
 
-
-@csrf_exempt
-def temperatura(request):
-    if request.method == "POST":
-        return JsonResponse({"response": f"Temperatura registrada en x valor xd"})
