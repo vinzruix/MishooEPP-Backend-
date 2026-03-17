@@ -1,7 +1,9 @@
 import tempfile
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
+
+from django.utils.datastructures import MultiValueDictKeyError
+from rest_framework.exceptions import NotFound, NotAcceptable, ValidationError
 from rest_framework.response import Response
+from rest_framework.status import HTTP_201_CREATED
 from rest_framework.views import APIView
 from users.models import User
 from users.serializers import UserSerializer
@@ -11,14 +13,24 @@ from users.services import create_user
 class UserListCreateAPIView(APIView):
 
     def post(self, request):
-        video = request.FILES['video']
+        try:
+            video = request.FILES['video']
+        except MultiValueDictKeyError:
+            raise NotAcceptable({"error": "Video not found"})
+
         user = {
             "name": request.data['name'],
             "last_name": request.data['last_name'],
             "email": request.data['email'],
             "username": request.data['username'],
-            "password": request.data['password']
+            "password": request.data['password'],
+            "password_confirmation" : request.data['password_confirmation']
+
         }
+
+        for key, value in user.items():
+            if not value:
+                raise NotAcceptable({"error": f"Parameter missing:{key}"})
 
         temp_file = tempfile.NamedTemporaryFile(delete=False)
 
@@ -27,9 +39,14 @@ class UserListCreateAPIView(APIView):
 
         temp_file.close()
 
-        new_user = create_user(user, temp_file.name)
+        try:
+            create_user(user, temp_file.name)
+        except ValueError as e:
+            raise ValidationError({"error": f"{e}"})
+        except PermissionError as e:
+            raise NotAcceptable({"error": f"{e}"})
 
-        return Response({"user": new_user.username})
+        return Response({"success": "User created"}, status=HTTP_201_CREATED)
 
     def get(self, request):
         user = User.objects.all()
@@ -44,9 +61,4 @@ class UserDetailAPIView(APIView):
             serializer = UserSerializer(user)
             return Response(serializer.data)
         except User.DoesNotExist:
-            return Response({"error":"DoesNotExist"})
-
-
-
-
-
+            raise NotFound({"error": "User does not exist"})
