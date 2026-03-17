@@ -61,7 +61,13 @@ def find_worker(encoding):
 
     for identifier, tensor_faces in User.objects.values_list('id', 'tensor_faces'):
 
+        if not tensor_faces:
+            continue
+
         tensors = np.array(tensor_faces)
+
+
+
 
         for tensor in tensors:
             result = face_recognition.compare_faces([tensor], np.array(encoding), tolerance=0.5)
