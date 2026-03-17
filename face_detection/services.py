@@ -17,15 +17,23 @@ def obtain_tensors_by_video(video):
         ret, frame = cap.read()
         if not ret: break
         locations = face_recognition.face_locations(frame, model="hog")
-        print(locations)
+
+
+        if len(locations) > 1:
+            continue
+
+        if len(locations) < 1:
+            continue
+
         tensors_faces.append(face_recognition.face_encodings(frame, locations)[0].tolist())
+
 
     cap.release()
 
     return tensors_faces
 
 
-def obtain_worker_image_by_video(video, name):
+def obtain_worker_image_by_video(video, username):
     cap = cv2.VideoCapture(video)
     worker_face = None
 
@@ -40,14 +48,12 @@ def obtain_worker_image_by_video(video, name):
     worker_face = cv2.cvtColor(worker_face, cv2.COLOR_BGR2RGB)
     worker_face = Image.fromarray(worker_face)
 
-
     buffer = io.BytesIO()
     worker_face.save(buffer, format='JPEG', quality=85)
     buffer.seek(0)
-    worker_image = ContentFile(buffer.read(), name=f"{name}.jpg")
+    worker_image = ContentFile(buffer.read(), name=f"{username}.jpg")
 
     return worker_image
-
 
 
 def find_worker(encoding):
@@ -61,4 +67,4 @@ def find_worker(encoding):
             if result == np.True_:
                 return User.objects.get(id=identifier)
 
-    return False
+    return -1
