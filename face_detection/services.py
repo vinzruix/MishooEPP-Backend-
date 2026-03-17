@@ -18,7 +18,6 @@ def obtain_tensors_by_video(video):
         if not ret: break
         locations = face_recognition.face_locations(frame, model="hog")
 
-
         if len(locations) > 1:
             continue
 
@@ -26,7 +25,6 @@ def obtain_tensors_by_video(video):
             continue
 
         tensors_faces.append(face_recognition.face_encodings(frame, locations)[0].tolist())
-
 
     cap.release()
 
@@ -57,6 +55,10 @@ def obtain_worker_image_by_video(video, username):
 
 
 def find_worker(encoding):
+
+    if not User.objects.exists():
+        return -1
+
     for identifier, tensor_faces in User.objects.values_list('id', 'tensor_faces'):
 
         tensors = np.array(tensor_faces)
