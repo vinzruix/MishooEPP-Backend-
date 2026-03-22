@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'face_detection',
     'sensors',
+    'attendance',
 ]
 
 MIDDLEWARE = [

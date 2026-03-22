@@ -23,7 +23,10 @@ from MishooEPP_Backend import settings
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("users/", include("users.urls")),
-    path("sensors/", include("sensors.urls"))
+    path("sensors/", include("sensors.urls")),
+    path("attendance/", include("attendance.urls")),
+    path("face_detection/", include("face_detection.urls"))
+
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
