@@ -1,10 +1,10 @@
 import tempfile
-
 from django.utils.datastructures import MultiValueDictKeyError
 from rest_framework.exceptions import NotFound, NotAcceptable, ValidationError
 from rest_framework.response import Response
 from rest_framework.status import HTTP_201_CREATED
 from rest_framework.views import APIView
+
 from users.models import User
 from users.serializers import UserSerializer
 from users.services import create_user
@@ -24,7 +24,7 @@ class UserListCreateAPIView(APIView):
             "email": request.data['email'],
             "username": request.data['username'],
             "password": request.data['password'],
-            "password_confirmation" : request.data['password_confirmation']
+            "password_confirmation": request.data['password_confirmation']
 
         }
 
@@ -46,7 +46,7 @@ class UserListCreateAPIView(APIView):
         except PermissionError as e:
             raise NotAcceptable({"error": f"{e}"})
 
-        return Response({"success": "User created"}, status=HTTP_201_CREATED)
+        return Response({"success": "Usuario creado"}, status=HTTP_201_CREATED)
 
     def get(self, request):
         user = User.objects.all()
@@ -62,3 +62,5 @@ class UserDetailAPIView(APIView):
             return Response(serializer.data)
         except User.DoesNotExist:
             raise NotFound({"error": "User does not exist"})
+
+

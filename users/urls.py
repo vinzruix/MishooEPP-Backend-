@@ -3,6 +3,7 @@ from django.urls import path, include
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from MishooEPP_Backend import settings
+from users import views
 from users.views import *
 
 urlpatterns = [
