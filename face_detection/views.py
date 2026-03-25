@@ -4,7 +4,8 @@ import cv2
 import numpy as np
 from PIL import Image
 from django.core.files.base import ContentFile
-from rest_framework.exceptions import NotAcceptable, NotFound
+from django.http import UnreadablePostError
+from rest_framework.exceptions import NotAcceptable, NotFound, Throttled, UnsupportedMediaType
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -17,12 +18,17 @@ class FaceDetectionCreateAPIView(APIView):
 
     def post(self,request):
 
-        frame = cv2.imdecode(np.frombuffer(request.body, np.uint8), cv2.IMREAD_COLOR)
+        try:
+            frame = cv2.imdecode(np.frombuffer(request.body, np.uint8), cv2.IMREAD_COLOR)
+        except UnreadablePostError as e:
+            raise UnsupportedMediaType("The media was not found")
+
 
         try:
             locations = search_face_in_image(frame)
         except ValueError as e:
             raise NotAcceptable({"error": f"{e}"})
+
 
         encodings = obtain_encoding_ready_to_use(frame, locations)
 
