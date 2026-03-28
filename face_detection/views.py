@@ -16,6 +16,7 @@ from face_detection.services import find_worker, search_face_in_image, obtain_en
 
 class FaceDetectionCreateAPIView(APIView):
 
+
     def post(self,request):
 
         try:
