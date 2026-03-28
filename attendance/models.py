@@ -9,6 +9,12 @@ from users.models import User
 
 class WorkerArrival(models.Model):
 
+    class Meta:
+        permissions = [
+            ("view_all_workerarrival", "Can view all the arrivals"),
+        ]
+
+
     def arrival_image_path(self, filename):
         now = self.arrival_timestamp
         return f"arrival_images/{now:%Y}/{self.worker.username}/{now.year}{now.month}{now.microsecond}{filename}"

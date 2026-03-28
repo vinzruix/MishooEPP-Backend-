@@ -42,6 +42,7 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
+    "TOKEN_OBTAIN_SERIALIZER" : 'users.serializers.CustomTokenObtainPairSerializer',
     "ACCESS_TOKEN_LIFETIME" : timedelta(minutes=30),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
 }
@@ -61,6 +62,8 @@ INSTALLED_APPS = [
     'face_detection',
     'sensors',
     'attendance',
+    'epp_detection',
+    'department',
 ]
 
 MIDDLEWARE = [

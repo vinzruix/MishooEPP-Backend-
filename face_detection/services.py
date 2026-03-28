@@ -49,13 +49,15 @@ def obtain_worker_image_by_video(video, username):
 
 
 def find_worker(encoding):
+
     if not User.objects.exists():
-        return None
+        return -1
 
     for identifier, tensor_faces in User.objects.values_list('id', 'tensor_faces'):
 
         if not tensor_faces:
             continue
+
 
         tensors = np.array(tensor_faces)
 
@@ -65,7 +67,7 @@ def find_worker(encoding):
             if result == np.True_:
                 return User.objects.get(id=identifier)
 
-    return None
+    return -1
 
 
 def search_face_in_image(image):
