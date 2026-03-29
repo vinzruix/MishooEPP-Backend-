@@ -5,6 +5,11 @@ from django.db import models
 # Create your models here.
 
 class Temperature(models.Model):
+    class Meta:
+        permissions = [
+            ("view_all_sensors", "Can view all the sensors")
+        ]
+
     date = models.DateTimeField(auto_now=True)
     value = models.DecimalField(decimal_places=2, max_digits=6)
 

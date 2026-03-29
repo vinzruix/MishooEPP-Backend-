@@ -1,12 +1,13 @@
 from django.contrib.auth.models import Group
 from django.shortcuts import render
+from rest_framework.exceptions import NotAcceptable
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from sympy import true
 
 from department.models import Department
 from department.serializer import DepartmentSerializer
-from department.services import create_group
+from department.services import create_group, create_department
 
 
 # Create your views here.
@@ -25,19 +26,18 @@ class DepartmentListApiView(APIView):
 
         department = {
             "name" : request.data["name"],
-            "epp" : request.data["epp"],
-            "permissions" : request.data["permissions"]
+            "epp" : request.data.getlist("epp"),
+            "permissions" : request.data.getlist("permissions")
         }
 
-        new_group = create_group(department["name"], department["permissions"])
-        new_group.save()
 
-        new_department = Department()
-        new_department.name = department["name"]
-        new_department.group = new_group
-        new_department.epp = department["epp"]
-        new_department.save()
+        try:
+            new_group = create_group(department["name"], department["permissions"])
+            new_department = create_department(new_group, department["epp"])
+        except ValueError as e:
+            raise NotAcceptable({"error": f"{e}"})
 
+                                                               
         return Response({"success":f"department {new_department.name} created"})
 
 
