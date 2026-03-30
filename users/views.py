@@ -22,10 +22,10 @@ class UserListCreateAPIView(APIView):
 
     def get_permissions(self):
         if self.request.method == "GET":
-            return [permission_required("users.view_all")()]
+            return [permission_required("users.view_all_user")()]
 
         if self.request.method == "POST":
-            return [permission_required("users.create_user")]
+            return [permission_required("users.create_user")()]
 
         return [IsAuthenticated()]
 

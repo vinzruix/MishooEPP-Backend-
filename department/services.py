@@ -5,7 +5,8 @@ from department.models import Department
 
 def create_group(name, permissions):
 
-
+    if not name:
+        raise ValueError("There is no name")
 
     if Group.objects.filter(name=name).exists():
         raise ValueError("Group name already exist")
@@ -26,6 +27,9 @@ def create_group(name, permissions):
 
 
 def create_department(group,epp):
+
+    if not group.name:
+        raise ValueError("There is no name")
 
     if Department.objects.filter(name=group.name).exists():
         raise ValueError("Department already exist")
