@@ -83,4 +83,12 @@ class UserDetailAPIView(APIView):
         except User.DoesNotExist:
             raise NotFound({"error": "User does not exist"})
 
+class AllUsersAPIView(APIView):
 
+    def get(self, request):
+        try:
+            users = User.objects.all()
+            serializer = UserSerializer(users, many=True)
+            return Response(serializer.data)
+        except User.DoesNotExist:
+            raise NotFound({"error": "User does not exist"})

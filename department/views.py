@@ -3,7 +3,6 @@ from django.shortcuts import render
 from rest_framework.exceptions import NotAcceptable
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from sympy import true
 
 from department.models import Department
 from department.serializer import DepartmentSerializer
