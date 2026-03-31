@@ -4,6 +4,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from MishooEPP_Backend.permissions import permission_required
 from sensors.models import Temperature, Humidity, CO2, TVOC, Pressure
 from sensors.serializers import TemperatureSerializer, HumiditySerializer, PressureSerializer, CO2Serializer, \
     TVOCSerializer
@@ -30,6 +31,7 @@ class SensorsCreateAPIView(APIView):
 
 class BaseSensorListAPIView(APIView):
 
+    permission_classes = [permission_required('sensors.view_all_sensor')]
     model = None
     serializer_class = None
 

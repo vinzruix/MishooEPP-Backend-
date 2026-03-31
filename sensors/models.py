@@ -7,7 +7,7 @@ from django.db import models
 class Temperature(models.Model):
     class Meta:
         permissions = [
-            ("view_all_sensors", "Can view all the sensors")
+            ("view_all_sensor", "Can view all the sensors")
         ]
 
     date = models.DateTimeField(auto_now=True)
