@@ -1,0 +1,102 @@
+### Login
+
+POST http://localhost:8000/users/api/token/
+Authorization: Bearer
+Content-Type: application/json
+
+{
+ "username" : "admin",
+ "password" : "admin"
+}
+
+> {%
+client.global.set("access_token", response.body.access)
+ %}
+
+### Get all users
+
+GET http://localhost:8000/users/api/users/
+Authorization: Bearer {{ access_token }}
+Content-Type: application/json
+
+{
+
+}
+
+### Get a specifc user
+
+GET http://localhost:8000/users/api/users/1/
+Authorization: Bearer {{ access_token }}
+Content-Type: application/json
+
+### Create a user
+
+POST http://localhost:8000/users/api/users/
+Authorization: Bearer {{ access_token }}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="username"
+
+beans
+
+
+--boundary
+Content-Disposition: form-data; name="name"
+
+Yahir
+
+--boundary
+Content-Disposition: form-data; name="last_name"
+
+Tejeda Moreno
+
+--boundary
+Content-Disposition: form-data; name="email"
+
+yairtejeda@hotmail.com
+
+--boundary
+Content-Disposition: form-data; name="password"
+
+beansruix
+
+--boundary
+Content-Disposition: form-data; name="password_confirmation"
+
+beansruix
+
+--boundary
+Content-Disposition: form-data; name="department"
+
+Creacion de departmentos
+
+--boundary
+Content-Disposition: form-data; name="video"; filename="Yahir.mov"
+
+< test_content/Yahir.mov
+
+
+### Create Node Sensor
+POST http://localhost:8000/sensors/api/sensors/node/
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="name"
+
+El pepe
+
+--boundary
+Content-Disposition: form-data; name="location"
+
+En mi puta casa
+
+--boundary
+Content-Disposition: form-data; name="ip"
+
+http://localhost:8180/toggle/1211
+
+
+
+
+
