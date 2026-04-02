@@ -22,7 +22,9 @@ def obtain_tensors_by_video(video):
             locations = search_face_in_image(frame)
         except ValueError:
             continue
+        
 
+        
         if locations:
             tensors_faces.append(face_recognition.face_encodings(frame, locations)[0].tolist())
 
@@ -73,11 +75,12 @@ def find_worker(encoding):
 def search_face_in_image(image):
     locations = face_recognition.face_locations(image, model="hog")
 
+
     if len(locations) < 1:
-        raise ValueError("More than one face detected")
+        raise ValueError("No face detected")
 
     if len(locations) > 1:
-        return ValueError("More than one face detected")
+        raise ValueError("More than one face detected")
 
     return locations
 

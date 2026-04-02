@@ -1,8 +1,18 @@
+import uuid
 from symtable import Class
 
 from django.db import models
 
+from MishooEPP_Backend.core.models import Node
+from users.models import User
+
+
 # Create your models here.
+
+
+class SensorNode(Node):
+    user_node = models.OneToOneField(User, related_name="sensor_nodes", on_delete=models.CASCADE, null=True)
+
 
 class Temperature(models.Model):
     class Meta:

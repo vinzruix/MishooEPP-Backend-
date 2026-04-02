@@ -1,4 +1,5 @@
 import tempfile
+from django.db import transaction
 from django.utils.datastructures import MultiValueDictKeyError
 from rest_framework.exceptions import NotFound, NotAcceptable, ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -13,12 +14,11 @@ from users.serializers import UserSerializer, CustomTokenObtainPairSerializer
 from users.services import create_user
 
 
-
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
-class UserListCreateAPIView(APIView):
 
+class UserListCreateAPIView(APIView):
 
     def get_permissions(self):
         if self.request.method == "GET":
@@ -33,47 +33,51 @@ class UserListCreateAPIView(APIView):
 
         try:
             video = request.FILES['video']
-        except MultiValueDictKeyError:
-            raise NotAcceptable({"error": "Video not found"})
+            user = {
+                "name": request.data['name'],
+                "last_name": request.data['last_name'],
+                "email": request.data['email'],
+                "username": request.data['username'],
+                "password": request.data['password'],
+                "password_confirmation": request.data['password_confirmation'],
+                "department": request.data['department']
+            }
 
-        user = {
-            "name": request.data['name'],
-            "last_name": request.data['last_name'],
-            "email": request.data['email'],
-            "username": request.data['username'],
-            "password": request.data['password'],
-            "password_confirmation": request.data['password_confirmation'],
-            "department" : request.data['department']
-        }
+        except MultiValueDictKeyError as e:
+            raise NotAcceptable({"error": f"value missing {e}"})
+
 
         for key, value in user.items():
             if not value:
-                raise NotAcceptable({"error": f"Parameter missing:{key}"})
-
-        temp_file = tempfile.NamedTemporaryFile(delete=False)
-
-        for chunk in video.chunks():
-            temp_file.write(chunk)
-
-        temp_file.close()
-
+                raise NotAcceptable({"error": f"Parameter empty:{key}"})
+    
         try:
-            create_user(user, temp_file.name)
+            with transaction.atomic():
+    
+                temp_file = tempfile.NamedTemporaryFile(delete=False)
+    
+                for chunk in video.chunks():
+                    temp_file.write(chunk)
+    
+                temp_file.close()
+    
+                create_user(user, temp_file.name)
+    
         except ValueError as e:
             raise ValidationError({"error": f"{e}"})
         except PermissionError as e:
             raise NotAcceptable({"error": f"{e}"})
-
+    
         return Response({"success": "Usuario creado"}, status=HTTP_201_CREATED)
 
-    def get(self, request):
-        user = User.objects.all()
-        serializer = UserSerializer(user, many=True)
-        return Response(serializer.data)
+
+def get(self, request):
+    user = User.objects.all()
+    serializer = UserSerializer(user, many=True)
+    return Response(serializer.data)
 
 
 class UserDetailAPIView(APIView):
-
 
     def get(self, request, pk):
         try:
@@ -82,5 +86,3 @@ class UserDetailAPIView(APIView):
             return Response(serializer.data)
         except User.DoesNotExist:
             raise NotFound({"error": "User does not exist"})
-
-

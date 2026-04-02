@@ -39,12 +39,14 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES" : (
         "rest_framework.permissions.AllowAny",
     ),
+
 }
 
 SIMPLE_JWT = {
     "TOKEN_OBTAIN_SERIALIZER" : 'users.serializers.CustomTokenObtainPairSerializer',
     "ACCESS_TOKEN_LIFETIME" : timedelta(minutes=30),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "BLACKLIST_AFTER_ROTATION": True,
 }
 
 # Application definition

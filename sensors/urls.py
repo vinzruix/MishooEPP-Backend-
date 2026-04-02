@@ -1,9 +1,16 @@
 from django.urls import path
+from rest_framework_simplejwt.views import TokenRefreshView
 
 from sensors.views import SensorsCreateAPIView, TemperatureListAPIView, HumidityListAPIView, CO2ListAPIView, \
-    TVOCListAPIView
+    TVOCListAPIView, \
+    SensorNodeCreateAPIView, SensorNodeObtainPairSerializerAPIView
 
 urlpatterns = [
+
+    path("api/sensors/node/", SensorNodeCreateAPIView.as_view()),
+    path("api/sensors/node/token/", SensorNodeObtainPairSerializerAPIView.as_view()),
+    path("api/sensors/node/token/refresh/", TokenRefreshView.as_view()),
+
     path('api/sensors/', SensorsCreateAPIView.as_view()),
     path('api/sensors/temperature/', TemperatureListAPIView.as_view()),
     path('api/sensors/humidity/', HumidityListAPIView.as_view()),

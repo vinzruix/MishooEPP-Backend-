@@ -1,5 +1,44 @@
+from typing import Any
 from rest_framework import serializers
-from sensors.models import Temperature, Humidity, Pressure, CO2, TVOC
+from rest_framework.exceptions import AuthenticationFailed
+from rest_framework_simplejwt.serializers import AuthUser, TokenObtainPairSerializer
+from rest_framework_simplejwt.tokens import Token
+
+from sensors.models import Temperature, Humidity, Pressure, CO2, TVOC, SensorNode
+
+
+class SensorNodeObtainPairSerializer(TokenObtainPairSerializer):
+
+    def validate(self, attrs: dict[str, Any]) -> dict[Any, Any]:
+        try:
+            data = super().validate(attrs)
+        except Exception:
+            raise AuthenticationFailed({"error":"invalid credentials"})
+
+        if not SensorNode.objects.filter(user_node=self.user).exists():
+            raise AuthenticationFailed({"error":"invalid credentials"})
+        
+        node = self.user.node
+
+        if not node.is_active:
+            raise AuthenticationFailed({"error":"device not active"})
+
+        return data
+
+
+    @classmethod
+    def get_token(cls, user: AuthUser) -> Token:
+        token = super().get_token(user)
+        token['is_device'] = True
+        token['id_node'] = user.username
+        return token
+
+
+
+class EnvironmentSensorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SensorNode
+        fields = ["name", "location", "is_active", ]
 
 
 class SensorBaseSerializer(serializers.ModelSerializer):
