@@ -1,3 +1,4 @@
+import socket
 import tempfile
 from django.db import transaction
 from django.utils.datastructures import MultiValueDictKeyError
@@ -71,10 +72,10 @@ class UserListCreateAPIView(APIView):
         return Response({"success": "Usuario creado"}, status=HTTP_201_CREATED)
 
 
-def get(self, request):
-    user = User.objects.all()
-    serializer = UserSerializer(user, many=True)
-    return Response(serializer.data)
+    def get(self, request):
+        user = User.objects.all()
+        serializer = UserSerializer(user, many=True)
+        return Response(serializer.data)
 
 
 class UserDetailAPIView(APIView):

@@ -15,10 +15,12 @@ class SensorNodeObtainPairSerializer(TokenObtainPairSerializer):
         except Exception:
             raise AuthenticationFailed({"error":"invalid credentials"})
 
+        
+
         if not SensorNode.objects.filter(user_node=self.user).exists():
             raise AuthenticationFailed({"error":"invalid credentials"})
         
-        node = self.user.node
+        node = SensorNode.objects.get(user_node=self.user)
 
         if not node.is_active:
             raise AuthenticationFailed({"error":"device not active"})

@@ -15,5 +15,9 @@ class Node(models.Model):
     location = models.CharField(max_length=30)
     is_active = models.BooleanField(default=False)
     ip = models.URLField(null=True)
+    
+
+    def __str__(self):
+        return str(self.id)
 
 
