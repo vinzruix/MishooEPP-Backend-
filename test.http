@@ -78,7 +78,7 @@ Content-Disposition: form-data; name="video"; filename="Yahir.mov"
 
 
 ### Create Node Sensor
-POST http://localhost:8000/sensors/api/sensors/node/
+POST http://192.168.68.105:8000/sensors/api/sensors/node/
 Content-Type: multipart/form-data; boundary=boundary
 
 --boundary
@@ -94,7 +94,23 @@ En mi puta casa
 --boundary
 Content-Disposition: form-data; name="ip"
 
-http://localhost:8180/toggle/1211
+http://localhost:8181/
+
+
+###
+
+
+
+
+
+
+### Prueba esp wowky
+POST http://localhost:8180/auth/
+Content-Type: application/json
+
+{
+  "hola" : "hola"
+}
 
 
 

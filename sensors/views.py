@@ -37,7 +37,7 @@ class SensorNodeCreateAPIView(APIView):
 
         try:
             with transaction.atomic():
-                ping_url(node["ip"])
+           #     ping_url(node["ip"])
 
                 node_username = uuid.uuid4()
                 node_password = secrets.token_urlsafe(16)
@@ -52,7 +52,7 @@ class SensorNodeCreateAPIView(APIView):
             raise NotAcceptable({"error":f"{e}"})
             
 
-        return Response({"success": f"{node_password}"})
+        return Response({"success": f"Sensor creado"})
 
 
 class SensorsCreateAPIView(APIView):

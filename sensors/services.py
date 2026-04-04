@@ -1,5 +1,7 @@
 import socket
 import requests
+from django.contrib.auth.models import Permission
+
 from sensors.models import  SensorNode
 from users.models import User
 
@@ -14,21 +16,23 @@ def ping_url(url):
 
 
 def send_server_credentials(id_device, password, esp_url):
-
-    current_server_url = socket.gethostbyname(socket.gethostname())
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8", 80))
+    ip = s.getsockname()[0]
 
     payload = {
-        "id": id_device,
+        "id": str(id_device),
         "password": password,
-        "server" : current_server_url
+        "server" : ip
     }
 
-    response = requests.post(f"{esp_url}/auth/", payload)
+
+    response = requests.post(f"{esp_url}/auth/", json=payload)
     
     if not response.ok:
         raise ValueError("The url server did not respond correctly")
 
-    return True
+    return response.status_code
 
     
 
@@ -60,4 +64,8 @@ def create_user_node(username,password):
     node.set_password(password)
     node.is_device = True
     node.save()
+
+    node.user_permissions.add(Permission.objects.get(codename="view_all_user"))
+
+    
     return node
