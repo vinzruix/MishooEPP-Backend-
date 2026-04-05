@@ -3,13 +3,18 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, Auth
 from rest_framework_simplejwt.tokens import Token
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from department.models import Department
+from department.serializer import DepartmentSimpleSerializer
 from .models import User
 from rest_framework import serializers
 
 class UserSerializer(serializers.ModelSerializer):
+    department = DepartmentSimpleSerializer()
+
     class Meta:
+
         model = User
-        fields = ["id","username","first_name","last_name","email","password","face"]
+        fields = ["id","username","first_name","last_name","email","password","face","department"]
         extra_kwargs = { "password" : {"write_only" : True}, "face" : {"read_only":True}}
 
 
