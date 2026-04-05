@@ -89,10 +89,17 @@ class SensorsDataListCreateAPIView(APIView):
         co2_value = request.POST["eco2"]
         tvoc_value = request.POST["tvoc"]
 
-        Temperature.objects.create(value=temp_value, node=request.user.sensor_nodes)
-        Humidity.objects.create(value=hum_value, node=request.user.sensor_nodes)
-        CO2.objects.create(value=co2_value, node=request.user.sensor_nodes)
-        TVOC.objects.create(value=tvoc_value, node=request.user.sensor_nodes)
+
+        try:
+            with transaction.atomic():
+
+                Temperature.objects.create(value=temp_value, node=request.user.sensor_nodes)
+                Humidity.objects.create(value=hum_value, node=request.user.sensor_nodes)
+                CO2.objects.create(value=co2_value, node=request.user.sensor_nodes)
+                TVOC.objects.create(value=tvoc_value, node=request.user.sensor_nodes)
+
+        except Exception as e:
+            raise NotAcceptable({"error":f"{e}"})
 
         return Response(status=status.HTTP_201_CREATED)
 
