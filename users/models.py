@@ -16,7 +16,7 @@ class User(AbstractUser):
             ("create_user", "Can create new users")
         ]
 
-    tensor_faces = ArrayField(ArrayField(models.FloatField(),size=128), size=50, null   =True)
+    tensor_faces = ArrayField(ArrayField(models.FloatField(),size=128), size=50, null=True)
     face = models.ImageField(upload_to='worker_images/', null=True)
     department = models.ForeignKey(Department, related_name='users', on_delete=DO_NOTHING, null=True)
     is_device = models.BooleanField(default=False)
