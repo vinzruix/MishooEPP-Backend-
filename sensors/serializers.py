@@ -42,7 +42,7 @@ class SensorNodeObtainPairSerializer(TokenObtainPairSerializer):
 class SensorNodeSerializer(serializers.ModelSerializer):
     class Meta:
         model = SensorNode
-        fields = ["name","location","is_active","ip"]
+        fields = ["id","name","location","is_active","ip"]
 
 class SensorBaseSerializer(serializers.ModelSerializer):
     class Meta:
