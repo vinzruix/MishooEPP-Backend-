@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
+from torch.fx.experimental.unification.multipledispatch.utils import raises
 
 from MishooEPP_Backend.permissions import permission_required
 from sensors.models import Temperature, Humidity, CO2, TVOC, Pressure, SensorNode
@@ -22,10 +23,13 @@ class SensorNodeObtainPairSerializerAPIView(TokenObtainPairView):
     serializer_class = SensorNodeObtainPairSerializer
 
 
-class SensorNodeCreateAPIView(APIView):
+class SensorNodeListCreateAPIView(APIView):
 
     def get_permissions(self):
         if self.request == "POST":
+            return [permission_required("sensors.create_sensor")()]
+
+        if self.request == "PUT":
             return [permission_required("sensors.create_sensor")()]
 
         if self.request == "GET":
@@ -55,9 +59,9 @@ class SensorNodeCreateAPIView(APIView):
 
                 node_user = create_user_node(node_username, node_password)
 
-                create_sensor_node(request.data["name"], request.data["location"], request.data["ip"], node_user)
+                create_sensor_node(node["name"], node["location"], node["ip"], node_user)
 
-                send_server_credentials(node_username, node_password, request.data["ip"])
+                send_server_credentials(node_username, node_password, node["ip"])
 
         except ValueError as e:
             raise NotAcceptable({"error":f"{e}"})
@@ -65,10 +69,45 @@ class SensorNodeCreateAPIView(APIView):
 
         return Response({"success": f"Sensor creado"})
 
+
     def get(self,request):
-        node_data = SensorNode.objects.last()
+        node_data = SensorNode.objects.all()
+        serializer = SensorNodeSerializer(node_data,many=True)
+        return Response(serializer.data)
+
+
+class SensorNodeDetailPatchAPIView(APIView):
+    def get_permissions(self):
+        if self.request == "GET":
+            return [permission_required("sensors.view_all_sensor")()]
+
+        if self.request == "patch":
+            return [permission_required("sensors.create_sensor")()]
+        return [IsAuthenticated()]
+
+    def get(self,request,sensor_node_id):
+        try:
+            node_data = SensorNode.objects.get(id=sensor_node_id)
+        except Exception as e:
+            raise NotAcceptable({"error":f"{e}"})
+
         serializer = SensorNodeSerializer(node_data,many=False)
         return Response(serializer.data)
+
+
+    def patch(self,request,sensor_node_id):
+        try:
+            node_data = SensorNode.objects.get(id=sensor_node_id)
+        except Exception as e:
+            raise NotAcceptable({"error":f"{e}"})
+
+        serializer = SensorNodeSerializer(instance=node_data, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+
+        raise NotAcceptable({"error":"error"})
 
 
 class SensorsDataCreateAPIView(APIView):
@@ -112,16 +151,21 @@ class SensorDataDetailAPIView(APIView):
 
         return [IsAuthenticated()]
 
-    def get(self,request,sensor_node):
+    def get(self,request,sensor_node_id):
 
         try:
-            node_data = SensorNode.objects.get(id=sensor_node)
+            node_data = SensorNode.objects.get(id=sensor_node_id)
         except Exception as e:
             raise NotAcceptable({"error":f"{e}"})
 
 
         serializer = SensorDataSerializer(node_data,many=False)
         return Response(serializer.data)
+
+
+
+
+
 
 
 class BaseSensorListAPIView(APIView):
