@@ -71,7 +71,7 @@ class SensorNodeCreateAPIView(APIView):
         return Response(serializer.data)
 
 
-class SensorsDataListCreateAPIView(APIView):
+class SensorsDataCreateAPIView(APIView):
 
     def get_permissions(self):
         if self.request.method == "GET":
@@ -103,11 +103,25 @@ class SensorsDataListCreateAPIView(APIView):
 
         return Response(status=status.HTTP_201_CREATED)
 
-    def get(self,request):
-        node_data = SensorNode.objects.last()
+
+
+class SensorDataDetailAPIView(APIView):
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [permission_required("sensors.view_all_sensor")()]
+
+        return [IsAuthenticated()]
+
+    def get(self,request,sensor_node):
+
+        try:
+            node_data = SensorNode.objects.get(id=sensor_node)
+        except Exception as e:
+            raise NotAcceptable({"error":f"{e}"})
+
+
         serializer = SensorDataSerializer(node_data,many=False)
         return Response(serializer.data)
-
 
 
 class BaseSensorListAPIView(APIView):

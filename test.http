@@ -108,7 +108,7 @@ temp=31&hum=40&eco2=785&tvoc=1206
 
 
 ### Get sensor data
-GET http://localhost:8000/sensors/api/sensors/
+GET http://localhost:8000/sensors/api/sensors/d65c3cc6-b555-458c-ac8c-062fdf2b5c60/
 Authorization: Bearer {{ access_token }}
 Content-Type: application/x-www-form-urlencoded
 
