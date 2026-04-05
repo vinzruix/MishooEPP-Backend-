@@ -4,13 +4,15 @@ from django.db import transaction
 from django.utils.datastructures import MultiValueDictKeyError
 from rest_framework import status
 from rest_framework.exceptions import NotAcceptable
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
+
 from MishooEPP_Backend.permissions import permission_required
-from sensors.models import Temperature, Humidity, CO2, TVOC, Pressure
+from sensors.models import Temperature, Humidity, CO2, TVOC, Pressure, SensorNode
 from sensors.serializers import TemperatureSerializer, HumiditySerializer, PressureSerializer, CO2Serializer, \
-    TVOCSerializer, SensorNodeObtainPairSerializer
+    TVOCSerializer, SensorNodeObtainPairSerializer, SensorNodeSerializer, SensorDataSerializer
 from sensors.services import ping_url, create_user_node, create_sensor_node, send_server_credentials
 
 
@@ -21,6 +23,15 @@ class SensorNodeObtainPairSerializerAPIView(TokenObtainPairView):
 
 
 class SensorNodeCreateAPIView(APIView):
+
+    def get_permissions(self):
+        if self.request == "POST":
+            return [permission_required("sensors.create_sensor")()]
+
+        if self.request == "GET":
+            return [permission_required("sensors.view_all_sensor")()]
+        return [IsAuthenticated()]
+
 
     def post(self, request):
         
@@ -54,8 +65,22 @@ class SensorNodeCreateAPIView(APIView):
 
         return Response({"success": f"Sensor creado"})
 
+    def get(self,request):
+        node_data = SensorNode.objects.last()
+        serializer = SensorNodeSerializer(node_data,many=False)
+        return Response(serializer.data)
 
-class SensorsCreateAPIView(APIView):
+
+class SensorsDataListCreateAPIView(APIView):
+
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [permission_required("sensors.view_all_sensor")()]
+
+        if self.request.method == "POST":
+            return [permission_required("sensors.create_sensor")()]
+
+        return [IsAuthenticated()]
 
     def post(self, request):
         temp_value = request.POST['temp']
@@ -64,12 +89,18 @@ class SensorsCreateAPIView(APIView):
         co2_value = request.POST["eco2"]
         tvoc_value = request.POST["tvoc"]
 
-        Temperature.objects.create(value=temp_value)
-        Humidity.objects.create(value=hum_value)
-        CO2.objects.create(value=co2_value)
-        TVOC.objects.create(value=tvoc_value)
+        Temperature.objects.create(value=temp_value, node=request.user.sensor_nodes)
+        Humidity.objects.create(value=hum_value, node=request.user.sensor_nodes)
+        CO2.objects.create(value=co2_value, node=request.user.sensor_nodes)
+        TVOC.objects.create(value=tvoc_value, node=request.user.sensor_nodes)
 
         return Response(status=status.HTTP_201_CREATED)
+
+    def get(self,request):
+        node_data = SensorNode.objects.last()
+        serializer = SensorDataSerializer(node_data,many=False)
+        return Response(serializer.data)
+
 
 
 class BaseSensorListAPIView(APIView):
