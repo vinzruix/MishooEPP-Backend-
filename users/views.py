@@ -5,7 +5,7 @@ from django.utils.datastructures import MultiValueDictKeyError
 from rest_framework.exceptions import NotFound, NotAcceptable, ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.status import HTTP_201_CREATED
+from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
@@ -69,13 +69,13 @@ class UserListCreateAPIView(APIView):
         except PermissionError as e:
             raise NotAcceptable({"error": f"{e}"})
     
-        return Response({"success": "Usuario creado"}, status=HTTP_201_CREATED)
+        return Response({"success": "Usuario creado"}, status=status.HTTP_201_CREATED)
 
 
     def get(self, request):
         user = User.objects.all()
         serializer = UserSerializer(user, many=True)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class UserDetailAPIView(APIView):
@@ -84,6 +84,6 @@ class UserDetailAPIView(APIView):
         try:
             user = User.objects.get(pk=pk)
             serializer = UserSerializer(user)
-            return Response(serializer.data)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         except User.DoesNotExist:
             raise NotFound({"error": "User does not exist"})
