@@ -5,6 +5,7 @@ import numpy as np
 from PIL import Image
 from django.core.files.base import ContentFile
 from django.http import UnreadablePostError
+from rest_framework import status
 from rest_framework.exceptions import NotAcceptable, NotFound, Throttled, UnsupportedMediaType
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -40,7 +41,7 @@ class FaceDetectionCreateAPIView(APIView):
             image = obtain_image_buffer_from_nparray(frame,f"{worker.username}")
             register_attendance_successfully(worker, image)
 
-            return Response({"success": f"user identified as {worker.first_name}"})
+            return Response({"success": f"user identified as {worker.first_name}"}, status=status.HTTP_302_FOUND)
 
         raise NotFound({"error":f"User not identified"})
 

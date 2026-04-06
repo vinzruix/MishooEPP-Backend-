@@ -1,8 +1,9 @@
 import socket
 import requests
 from django.contrib.auth.models import Permission
+from django.db import transaction
 
-from sensors.models import  SensorNode
+from sensors.models import SensorNode, Temperature, Humidity, CO2, TVOC
 from users.models import User
 
 
@@ -69,3 +70,22 @@ def create_user_node(username,password):
 
     
     return node
+
+def get_sensor_node(sensor_id):
+    try:
+        return SensorNode.objects.get(sensor_id)
+    except SensorNode.DoesNotExist:
+        raise ValueError("Node not found")
+
+
+def create_all_sensor_data(user,tem,hum,co2,tvoc):
+    try:
+        with transaction.atomic():
+
+            Temperature.objects.create(value=tem, node=user.sensor_nodes)
+            Humidity.objects.create(value=hum, node=user.sensor_nodes)
+            CO2.objects.create(value=co2, node=user.sensor_nodes)
+            TVOC.objects.create(value=tvoc, node=user.sensor_nodes)
+
+    except Exception as e:
+        raise ValueError(f"{e}")

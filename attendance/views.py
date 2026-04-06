@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from rest_framework import status
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -18,7 +19,7 @@ class AttendanceListAPIView(APIView):
     def get(self,request):
         attendances = WorkerArrival.objects.order_by("-arrival_timestamp")
         serializer = WorkerArrivalSerializer(attendances,many=True)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class UserAttendanceDetailAPIView(APIView):
@@ -31,4 +32,4 @@ class UserAttendanceDetailAPIView(APIView):
 
 
         serializer = WorkerArrivalSerializer(user_attendance, many=True)
-        return Response(serializer.data)
+        return Response(serializer.data,status=status.HTTP_200_OK)

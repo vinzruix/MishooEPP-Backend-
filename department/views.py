@@ -1,5 +1,6 @@
 from django.contrib.auth.models import Group
 from django.shortcuts import render
+from rest_framework import status
 from rest_framework.decorators import permission_classes
 from rest_framework.exceptions import NotAcceptable
 from rest_framework.permissions import IsAuthenticated
@@ -31,7 +32,7 @@ class DepartmentListApiView(APIView):
 
         departments = Department.objects.all()
         serializer = DepartmentSerializer(departments, many=True)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
     def post(self,request):
@@ -49,7 +50,7 @@ class DepartmentListApiView(APIView):
             raise NotAcceptable({"error": f"{e}"})
 
                                                                
-        return Response({"success":f"department {new_department.name} created"})
+        return Response({"success":f"department {new_department.name} created"},status=status.HTTP_201_CREATED)
 
 
 
@@ -60,4 +61,4 @@ class DepartmentListSimpleApiView(APIView):
     def get(self,request):
         departments = Department.objects.all()
         serializer = DepartmentSimpleSerializer(departments, many=True)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)

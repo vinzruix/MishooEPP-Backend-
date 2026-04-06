@@ -14,7 +14,8 @@ from MishooEPP_Backend.permissions import permission_required
 from sensors.models import Temperature, Humidity, CO2, TVOC, Pressure, SensorNode
 from sensors.serializers import TemperatureSerializer, HumiditySerializer, PressureSerializer, CO2Serializer, \
     TVOCSerializer, SensorNodeObtainPairSerializer, SensorNodeSerializer, SensorDataSerializer
-from sensors.services import ping_url, create_user_node, create_sensor_node, send_server_credentials
+from sensors.services import ping_url, create_user_node, create_sensor_node, send_server_credentials, get_sensor_node, \
+    create_all_sensor_data
 
 
 # Create your views here.
@@ -26,13 +27,13 @@ class SensorNodeObtainPairSerializerAPIView(TokenObtainPairView):
 class SensorNodeListCreateAPIView(APIView):
 
     def get_permissions(self):
-        if self.request == "POST":
+        if self.request.method == "POST":
             return [permission_required("sensors.create_sensor")()]
 
-        if self.request == "PUT":
+        if self.request.method == "PUT":
             return [permission_required("sensors.create_sensor")()]
 
-        if self.request == "GET":
+        if self.request.method == "GET":
             return [permission_required("sensors.view_all_sensor")()]
         return [IsAuthenticated()]
 
@@ -52,7 +53,7 @@ class SensorNodeListCreateAPIView(APIView):
 
         try:
             with transaction.atomic():
-           #     ping_url(node["ip"])
+                ping_url(node["ip"])
 
                 node_username = uuid.uuid4()
                 node_password = secrets.token_urlsafe(16)
@@ -67,37 +68,41 @@ class SensorNodeListCreateAPIView(APIView):
             raise NotAcceptable({"error":f"{e}"})
             
 
-        return Response({"success": f"Sensor creado"})
+        return Response({"success": f"Sensor creado"}, status=status.HTTP_201_CREATED)
 
 
     def get(self,request):
         node_data = SensorNode.objects.all()
         serializer = SensorNodeSerializer(node_data,many=True)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class SensorNodeDetailPatchAPIView(APIView):
     def get_permissions(self):
-        if self.request == "GET":
+        if self.request.method == "GET":
             return [permission_required("sensors.view_all_sensor")()]
 
-        if self.request == "patch":
+        if self.request.method == "patch":
             return [permission_required("sensors.create_sensor")()]
         return [IsAuthenticated()]
 
+
+
     def get(self,request,sensor_node_id):
+
         try:
-            node_data = SensorNode.objects.get(id=sensor_node_id)
+            node_data = get_sensor_node(sensor_node_id)
         except Exception as e:
             raise NotAcceptable({"error":f"{e}"})
 
         serializer = SensorNodeSerializer(node_data,many=False)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
     def patch(self,request,sensor_node_id):
         try:
-            node_data = SensorNode.objects.get(id=sensor_node_id)
+            node_data = get_sensor_node(sensor_node_id)
+            is_active = node_data.is_active
         except Exception as e:
             raise NotAcceptable({"error":f"{e}"})
 
@@ -105,7 +110,13 @@ class SensorNodeDetailPatchAPIView(APIView):
 
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data)
+
+            if is_active != node_data.is_active:
+                print("metodo que se activa al cambiar el estado del nodo xdxdxxd")
+
+            return Response(serializer.data,status=status.HTTP_200_OK)
+
+
 
         raise NotAcceptable({"error":"error"})
 
@@ -122,25 +133,20 @@ class SensorsDataCreateAPIView(APIView):
         return [IsAuthenticated()]
 
     def post(self, request):
-        temp_value = request.POST['temp']
-        hum_value = request.POST['hum']
-        # press_value = request.POST["press"]
-        co2_value = request.POST["eco2"]
-        tvoc_value = request.POST["tvoc"]
 
 
         try:
-            with transaction.atomic():
-
-                Temperature.objects.create(value=temp_value, node=request.user.sensor_nodes)
-                Humidity.objects.create(value=hum_value, node=request.user.sensor_nodes)
-                CO2.objects.create(value=co2_value, node=request.user.sensor_nodes)
-                TVOC.objects.create(value=tvoc_value, node=request.user.sensor_nodes)
-
+            create_all_sensor_data(
+                request.user,
+                request.POST["temp"],
+                request.POST["hum"],
+                request.POST["eco2"],
+                request.POST["tvoc"],
+            )
         except Exception as e:
             raise NotAcceptable({"error":f"{e}"})
 
-        return Response(status=status.HTTP_201_CREATED)
+        return Response({"success":"Data saved"},status=status.HTTP_201_CREATED)
 
 
 
@@ -160,7 +166,9 @@ class SensorDataDetailAPIView(APIView):
 
 
         serializer = SensorDataSerializer(node_data,many=False)
-        return Response(serializer.data)
+        return Response(serializer.data,status=status.HTTP_200_OK)
+
+
 
 
 
