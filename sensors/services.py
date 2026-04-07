@@ -66,7 +66,7 @@ def create_user_node(username,password):
     node.is_device = True
     node.save()
 
-    node.user_permissions.add(Permission.objects.get(codename="sensors.create_data_sensor"))
+    node.user_permissions.add(Permission.objects.get(codename="create_data_sensor"))
 
     
     return node
