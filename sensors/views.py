@@ -72,7 +72,7 @@ class SensorNodeListCreateAPIView(APIView):
 
 
     def get(self,request):
-        node_data = SensorNode.objects.all()
+        node_data = SensorNode.objects.all().order_by("-id")
         serializer = SensorNodeSerializer(node_data,many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -111,8 +111,7 @@ class SensorNodeDetailPatchAPIView(APIView):
         if serializer.is_valid():
             serializer.save()
 
-            if is_active != node_data.is_active:
-                print("metodo que se activa al cambiar el estado del nodo xdxdxxd")
+
 
             return Response(serializer.data,status=status.HTTP_200_OK)
 

@@ -7,7 +7,11 @@ class DepartmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Department
         fields = ["id","name","epp","group"]
+        ordering = ["-id"]
+
+
 
 class DepartmentSimpleSerializer(DepartmentSerializer):
     class Meta(DepartmentSerializer.Meta):
         fields = ["id","name"]
+        ordering = ["-id"]
