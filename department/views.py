@@ -1,4 +1,5 @@
 from django.contrib.auth.models import Group
+from django.db import transaction
 from django.shortcuts import render
 from rest_framework import status
 from rest_framework.decorators import permission_classes
@@ -11,7 +12,7 @@ from sympy import true
 from MishooEPP_Backend.permissions import permission_required
 from department.models import Department
 from department.serializer import DepartmentSerializer, DepartmentSimpleSerializer
-from department.services import create_group, create_department
+from department.services import create_group, create_department, get_department
 
 
 # Create your views here.
@@ -44,13 +45,48 @@ class DepartmentListApiView(APIView):
         }
 
         try:
-            new_group = create_group(department["name"], department["permissions"])
-            new_department = create_department(new_group, department["epp"])
+            with transaction.atomic():
+                new_group = create_group(department["name"], department["permissions"])
+                new_department = create_department(new_group, department["epp"])
         except ValueError as e:
             raise NotAcceptable({"error": f"{e}"})
 
                                                                
         return Response({"success":f"department {new_department.name} created"},status=status.HTTP_201_CREATED)
+
+
+class DepartmentDetailApiView(APIView):
+
+    def patch(self,request,department_id):
+        try:
+            department = get_department(department_id)
+        except Exception as e:
+            raise NotAcceptable({"error":f"{e}"})
+
+        serializer = DepartmentSerializer(department,request.data,partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"success":f"{department_id}"})
+
+
+        raise NotAcceptable({"error":f"data not valid"})
+
+    def delete(self,request,department_id):
+        try:
+            department = get_department(department_id)
+        except Exception as e:
+            raise NotAcceptable({"error":f"{e}"})
+
+        department.delete()
+
+        return Response({"success":"department eliminated"})
+
+
+
+
+
+
 
 
 

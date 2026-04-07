@@ -116,25 +116,31 @@ class SensorNodeDetailPatchAPIView(APIView):
 
             return Response(serializer.data,status=status.HTTP_200_OK)
 
-
-
         raise NotAcceptable({"error":"error"})
+
+    def delete(self,request,sensor_node_id):
+        try:
+            sensor_node = get_sensor_node(sensor_node_id)
+        except Exception as e:
+            raise NotAcceptable({"error":f"{e}"})
+
+        sensor_node.delete()
+
+        return Response({"success":f"{sensor_node.id} eliminated"}, status.HTTP_200_OK)
+
+
 
 
 class SensorsDataCreateAPIView(APIView):
 
     def get_permissions(self):
-        if self.request.method == "GET":
-            return [permission_required("sensors.view_all_sensor")()]
 
         if self.request.method == "POST":
-            return [permission_required("sensors.create_sensor")()]
+            return [permission_required("sensors.create_data_sensor")()]
 
         return [IsAuthenticated()]
 
     def post(self, request):
-
-
         try:
             create_all_sensor_data(
                 request.user,

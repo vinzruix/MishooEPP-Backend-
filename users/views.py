@@ -73,7 +73,7 @@ class UserListCreateAPIView(APIView):
 
 
     def get(self, request):
-        user = User.objects.all()
+        user = User.objects.filter(is_device=False, is_staff=False)
         serializer = UserSerializer(user, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
