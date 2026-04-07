@@ -30,7 +30,8 @@ class BaseDataSensor(models.Model):
 class Temperature(BaseDataSensor):
     class Meta:
         permissions = [
-            ("view_all_sensor", "Can view all the sensors")
+            ("view_all_sensor", "Can view all the sensors"),
+            ("create_data_sensor", "Can create new data in sensor")
         ]
 
     node = models.ForeignKey(SensorNode, related_name="temperature_data", on_delete=models.CASCADE, null=True)

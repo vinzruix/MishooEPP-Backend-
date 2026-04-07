@@ -3,6 +3,14 @@ from django.contrib.auth.models import Group, Permission
 from department.models import Department
 
 
+
+def get_department(department):
+    try:
+        return Department.objects.get(id=department)
+    except Department.DoesNotExist:
+        raise ValueError("Department does not exist")
+
+
 def create_group(name, permissions):
 
     if not name:

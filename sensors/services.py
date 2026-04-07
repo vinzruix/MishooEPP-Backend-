@@ -66,14 +66,14 @@ def create_user_node(username,password):
     node.is_device = True
     node.save()
 
-    node.user_permissions.add(Permission.objects.get(codename="view_all_user"))
+    node.user_permissions.add(Permission.objects.get(codename="sensors.create_data_sensor"))
 
     
     return node
 
 def get_sensor_node(sensor_id):
     try:
-        return SensorNode.objects.get(sensor_id)
+        return SensorNode.objects.get(id=sensor_id)
     except SensorNode.DoesNotExist:
         raise ValueError("Node not found")
 
