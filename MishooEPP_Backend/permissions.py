@@ -7,6 +7,20 @@ def permission_required(perm):
         def has_permission(self, request, view):
             if not request.user.has_perm(perm):
                 raise PermissionDenied({"error":f"permission {perm} not found"})
+
+            if request.user.is_device:
+                self.check_device_active(request.user)
+
             return True
+
+        def check_device_active(self,user):
+            try:
+                node = user.sensor_nodes
+            except Exception as e:
+                raise PermissionDenied({"error":f"{e}"})
+
+            if not node.is_active:
+                raise PermissionDenied({"error":f"Device not active"})
+
 
     return PermissionDynamic

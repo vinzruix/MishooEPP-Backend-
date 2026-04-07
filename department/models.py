@@ -10,6 +10,7 @@ class Department(models.Model):
             ("view_all_department", "Can visualize departments")
         ]
 
+
     name = models.TextField(max_length=50, unique=True)
     group = models.OneToOneField(Group, on_delete=models.CASCADE)
     epp = models.JSONField(default=list)
