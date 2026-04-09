@@ -4,14 +4,14 @@ from department.models import Department
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
-    permissions = serializers.SerializerMethodField()
+    permission = serializers.SerializerMethodField()
 
     class Meta:
         model = Department
-        fields = ["id","name","epp","group","permissions"]
+        fields = ["id","name","epp","group","permission"]
         ordering = ["-id"]
 
-    def get_permissions(self,obj):
+    def get_permission(self,obj):
         return list(
             obj.group.permissions.values_list("codename", flat=True)
         )
