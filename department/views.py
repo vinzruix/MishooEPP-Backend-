@@ -67,7 +67,7 @@ class DepartmentDetailApiView(APIView):
 
         if serializer.is_valid():
             serializer.save()
-            return Response({"success":f"{department_id}"})
+            return Response({"success":f"Departamento actualizado"})
 
 
         raise NotAcceptable({"error":f"data not valid"})
