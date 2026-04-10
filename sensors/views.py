@@ -102,7 +102,6 @@ class SensorNodeDetailPatchAPIView(APIView):
     def patch(self,request,sensor_node_id):
         try:
             node_data = get_sensor_node(sensor_node_id)
-            is_active = node_data.is_active
         except Exception as e:
             raise NotAcceptable({"error":f"{e}"})
 
@@ -110,8 +109,6 @@ class SensorNodeDetailPatchAPIView(APIView):
 
         if serializer.is_valid():
             serializer.save()
-
-
 
             return Response(serializer.data,status=status.HTTP_200_OK)
 
