@@ -9,6 +9,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from face_detection.exeptions import UserRegistered
 from users.models import User
 from MishooEPP_Backend.permissions import permission_required
 from users.serializers import UserSerializer, CustomTokenObtainPairSerializer
@@ -30,7 +31,8 @@ class UserListCreateAPIView(APIView):
 
         return [IsAuthenticated()]
 
-    def post(self, request):
+    @staticmethod
+    def post(request):
 
         try:
             video = request.FILES['video']
@@ -54,25 +56,18 @@ class UserListCreateAPIView(APIView):
     
         try:
             with transaction.atomic():
+
+                create_user(user, video)
     
-                temp_file = tempfile.NamedTemporaryFile(delete=False)
-    
-                for chunk in video.chunks():
-                    temp_file.write(chunk)
-    
-                temp_file.close()
-    
-                create_user(user, temp_file.name)
-    
-        except ValueError as e:
+        except (UserRegistered, ValueError) as e:
             raise ValidationError({"error": f"{e}"})
         except PermissionError as e:
             raise NotAcceptable({"error": f"{e}"})
     
         return Response({"success": "Usuario creado"}, status=status.HTTP_201_CREATED)
 
-
-    def get(self, request):
+    @staticmethod
+    def get( request):
         user = User.objects.filter(is_device=False, is_staff=False)
         serializer = UserSerializer(user, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -80,7 +75,8 @@ class UserListCreateAPIView(APIView):
 
 class UserDetailAPIView(APIView):
 
-    def get(self, request, pk):
+    @staticmethod
+    def get( request, pk):
         try:
             user = User.objects.get(pk=pk)
             serializer = UserSerializer(user)
