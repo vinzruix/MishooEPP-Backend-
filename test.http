@@ -5,8 +5,8 @@ Authorization: Bearer
 Content-Type: application/json
 
 {
- "username" : "d65c3cc6-b555-458c-ac8c-062fdf2b5c60",
- "password" : "hola"
+ "username" : "admin",
+ "password" : "admin"
 }
 
 > {%
@@ -38,33 +38,32 @@ Content-Type: multipart/form-data; boundary=boundary
 --boundary
 Content-Disposition: form-data; name="username"
 
-beans
+sdaa
 
 
 --boundary
 Content-Disposition: form-data; name="name"
 
-Yahir
+sdaa
 
 --boundary
 Content-Disposition: form-data; name="last_name"
 
-Tejeda Moreno
-
+sdaa
 --boundary
 Content-Disposition: form-data; name="email"
 
-yairtejeda@hotmail.com
+sdaa
 
 --boundary
 Content-Disposition: form-data; name="password"
 
-beansruix
+sdaa
 
 --boundary
 Content-Disposition: form-data; name="password_confirmation"
 
-beansruix
+sdaa
 
 --boundary
 Content-Disposition: form-data; name="department"
@@ -74,7 +73,7 @@ Creacion de departmentos
 --boundary
 Content-Disposition: form-data; name="video"; filename="Yahir.mov"
 
-< test_content/Yahir.mov
+< test_content/manu.mp4
 
 
 ### Create Node Sensor

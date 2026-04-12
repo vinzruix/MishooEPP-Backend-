@@ -6,3 +6,6 @@ class NumFaceError(Exception):
 
 class NoFacesData(Exception):
     pass
+
+class UserRegistered(Exception):
+    pass

@@ -1,153 +1,92 @@
 import io
 import tempfile
 from abc import abstractmethod, ABC
-
+from uniface import EdgeFace, compute_similarity
+from uniface.constants import  YOLOv5FaceWeights, EdgeFaceWeights
+from uniface.detection import  YOLOv5Face
 import cv2
-import face_recognition
 import numpy as np
 from PIL import Image
 from django.core.files.base import ContentFile
-from face_recognition import face_locations
-from sympy.categories.baseclasses import Class
-from torchvision.tv_tensors import Video
-
 from face_detection.exeptions import NumFaceError, NoFacesData, UserNotRegistered
 from users.models import User
 
+class FaceLocator(ABC):
 
-def obtain_tensors_by_video(video):
-    cap = cv2.VideoCapture(video)
-    tensors_faces = []
-
-    while True:
-        ret, frame = cap.read()
-        if not ret: break
-
-        try:
-            locations = search_face_in_image(frame)
-        except ValueError:
-            continue
-        
-
-        
-        if locations:
-            tensors_faces.append(face_recognition.face_encodings(frame, locations)[0].tolist())
-
-    cap.release()
-
-    return tensors_faces
+    @abstractmethod
+    def detect_faces(self, **kwargs):
+        pass
 
 
-def obtain_worker_image_by_video(video, username):
-    cap = cv2.VideoCapture(video)
-    worker_face = None
+class UFFaceLocator(FaceLocator):
 
-    while True:
-        ret, frame = cap.read()
-        if not ret: break
+    def __init__(self):
+        self.detector = YOLOv5Face(
+            model_name=YOLOv5FaceWeights.YOLOV5S,
+            confidence_threshold=0.6,
+            nms_threshold=0.5,
+            nms_mode='torchvision',
+            providers=None,
+        )
 
-        worker_face = frame
-
-    cap.release()
-
-    image = obtain_image_buffer_from_nparray(worker_face, f"{username}")
-
-    return image
-
-
-def find_worker(encoding):
-
-    if not User.objects.exists():
-        return -1
-
-    for identifier, tensor_faces in User.objects.values_list('id', 'tensor_faces'):
-
-        if not tensor_faces:
-            continue
-
-
-        tensors = np.array(tensor_faces)
-
-        for tensor in tensors:
-            result = face_recognition.compare_faces([tensor], np.array(encoding), tolerance=0.5)
-
-            if result == np.True_:
-                return User.objects.get(id=identifier)
-
-    return -1
-
-
-def search_face_in_image(image):
-    locations = face_recognition.face_locations(image, model="hog")
-
-
-    if len(locations) < 1:
-        raise ValueError("No face detected")
-
-    if len(locations) > 1:
-        raise ValueError("More than one face detected")
-
-    return locations
-
-def obtain_encoding_ready_to_use(frame,locations):
-    return face_recognition.face_encodings(frame, locations)[0].tolist()
-
-
-def obtain_image_buffer_from_nparray(np_image, filename):
-
-    image_rgb = cv2.cvtColor(np_image, cv2.COLOR_BGR2RGB)
-    image_rgb = Image.fromarray(image_rgb)
-
-    buffer = io.BytesIO()
-    image_rgb.save(buffer, format='JPEG', quality=85)
-    buffer.seek(0)
-    return ContentFile(buffer.read(), name=f"{filename}.jpg")
-
-
-### face_recognition facade design pattern try
-
-class FaceLocator:
-
-    def __init__(self, model="hog"):
-        self._model = model
-
-    def detect_faces(self,image):
-        locations = face_recognition.face_locations(image,model=self._model)
+    def detect_faces(self, **kwargs):
+        locations = self.detector.detect(kwargs.get('image'))
 
         if len(locations) > 1:
-            raise NumFaceError("More than one face detected")
-
+            raise NumFaceError("More than one face in the image")
         if len(locations) < 1:
             raise NumFaceError("No faces detected")
 
-        return locations
+        return locations[0].landmarks
 
-class FaceEncoder:
 
-    def __init__(self,model="large"):
-        self._model = model
 
-    def encode_face(self,locations,image):
-        encoding = face_recognition.face_encodings(image,locations, model=self._model)[0].tolist()
-        return encoding
+class FaceEncoder(ABC):
 
-class FaceComparer:
+    @abstractmethod
+    def encode_face(self,**kwargs):
+        pass
 
-    def __init__(self,tolerance=0.5):
+
+class UFFaceEncoder(FaceEncoder):
+
+    def __init__(self):
+        self._recognizer = EdgeFace(model_name=EdgeFaceWeights.S_GAMMA_05)
+
+    def encode_face(self, **kwargs):
+        return  self._recognizer.get_normalized_embedding(kwargs.get('image'), kwargs.get("locations")).tolist()
+
+
+class FaceComparer(ABC):
+
+    @abstractmethod
+    def compare_faces(self,**kwargs):
+        pass
+
+
+
+class UFFaceComparer(FaceComparer):
+
+    def __init__(self,tolerance = 0.5):
         self._tolerance = tolerance
 
-    def compare_faces(self,encoding_1,encoding_2):
-        comparison_result = face_recognition.compare_faces([encoding_1], np.array(encoding_2), tolerance=self._tolerance)
-        return comparison_result[0]
+    def compare_faces(self,**kwargs):
+        result = compute_similarity(kwargs.get("encoding_1"), kwargs.get("encoding_2"), normalized=True)
+        if result > 0.5:
+            return True
+        return False
 
 
 class VideoProcessor:
 
-    def __init__(self, locator = None, encoder = None):
-        self._locator = locator or FaceLocator()
-        self._encoder = encoder or FaceEncoder()
+    def __init__(self,
+                 locator : FaceLocator = None,
+                 encoder : FaceEncoder = None
+                 ):
+        self._locator = locator or UFFaceLocator()
+        self._encoder = encoder or UFFaceEncoder()
 
-    def extract_encodings_in_video(self,video):
+    def extract_encodings_in_video(self, video):
         cap = cv2.VideoCapture(video)
         encodings = []
 
@@ -155,18 +94,18 @@ class VideoProcessor:
             ret, frame = cap.read()
             if not ret: break
             try:
-                locations = self._locator.detect_faces(frame)
-            except ValueError:
+                locations = self._locator.detect_faces(image=frame)
+            except NumFaceError:
                 continue
 
-            if locations:
-                encodings.append(self._encoder.encode_face(locations,frame))
+            if locations.all():
+                encodings.append(self._encoder.encode_face(locations=locations, image=frame))
 
         cap.release()
 
         return encodings
 
-    def extract_last_video_frame(self,video):
+    def extract_last_video_frame(self, video):
         cap = cv2.VideoCapture(video)
         worker_face = None
 
@@ -183,13 +122,18 @@ class VideoProcessor:
 
 class UserSearcher:
 
-    def __init__(self, comparer=None, tolerance=0.5):
-        self._comparer = comparer or FaceComparer(tolerance)
+    def __init__(self,
+                 comparer : FaceComparer = None,
+                 tolerance=0.5
+                 ):
+        self._comparer = comparer or UFFaceComparer(tolerance)
 
     def search_user_id(self, user_encoding):
 
         if not User.objects.exists():
             raise NoFacesData("No workers registered")
+
+        user_encoding = np.array(user_encoding)
 
         for identifier, db_encodings in User.objects.values_list('id', 'tensor_faces'):
 
@@ -198,21 +142,26 @@ class UserSearcher:
 
             encodings = np.array(db_encodings)
 
-            for encoding in encodings:
-                result = self._comparer.compare_faces(encoding, np.array(user_encoding))
 
-                if result == np.True_:
+            for encoding in encodings:
+                if self._comparer.compare_faces(encoding_1=encoding, encoding_2=user_encoding):
                     return User.objects.get(id=identifier)
 
         raise UserNotRegistered("User not identified")
 
+    def check_user_registered(self, user_encoding):
+        try:
+            self.search_user_id(user_encoding)
+            return True
+        except (UserNotRegistered, NoFacesData):
+            return False
 
 
 class MediaConverter:
 
     @staticmethod
-    def np_to_imageRGB_buffer(np_array,filename):
-        image = cv2.cvtColor(np_array,cv2.COLOR_BGR2RGB)
+    def np_to_imageRGB_buffer(np_array, filename):
+        image = cv2.cvtColor(np_array, cv2.COLOR_BGR2RGB)
         image = Image.fromarray(image)
         buffer = io.BytesIO()
         image.save(buffer, format='JPEG', quality=85)
@@ -237,42 +186,47 @@ class MediaConverter:
 
 class FaceRecognitionFacade:
 
-    def __init__(self,locator=None,
-                 encoder=None,
-                 comparer=None,
+    def __init__(self, locator : FaceLocator =None,
+                 encoder : FaceEncoder = None,
+                 comparer: FaceComparer= None,
                  user_searcher=None,
                  comparer_tolerance=0.5,
                  video_processor=None,
-                 media_converter = None,
-                 locator_model="hog",
-                 encoder_model="large"):
+                 media_converter=None,
+                 ):
 
-        self._locator = locator or FaceLocator(locator_model)
-        self._encoder = encoder or FaceEncoder(encoder_model)
-        self._comparer = comparer or FaceComparer(tolerance=comparer_tolerance)
-        self._video_processor = video_processor or VideoProcessor(self._locator,self._encoder)
-        self._user_searcher = user_searcher or UserSearcher(self._comparer,comparer_tolerance)
+        self._locator = locator or UFFaceLocator()
+        self._encoder = encoder or UFFaceEncoder()
+        self._comparer = comparer or UFFaceComparer(tolerance=comparer_tolerance)
+        self._video_processor = video_processor or VideoProcessor(self._locator, self._encoder)
+        self._user_searcher = user_searcher or UserSearcher(self._comparer, comparer_tolerance)
         self._media_converter = media_converter or MediaConverter()
 
-    def get_encodings_by_video(self,video) -> list[float]:
+    def get_encodings_by_video(self, video) -> list[float]:
         file = self._handle_video(video)
         return self._video_processor.extract_encodings_in_video(file)
 
-    def get_user_id_by_image(self,image) -> tuple[User,ContentFile]:
+    def get_user_id_by_image(self, image) -> tuple[User, ContentFile]:
         image_np = self._handle_image(image)
-        locations = self._locator.detect_faces(image_np)
-        encoding = self._encoder.encode_face(locations,image_np)
+        locations = self._locator.detect_faces(image=image_np)
+        encoding = self._encoder.encode_face(locations=locations, image=image_np)
         user = self._user_searcher.search_user_id(encoding)
-        image_cf = self._media_converter.np_to_imageRGB_buffer(image_np,user.username)
+        image_cf = self._media_converter.np_to_imageRGB_buffer(image_np, user.username)
 
         return user, image_cf
 
-    def get_user_image_by_video(self,video,image_name):
+    def get_user_id_by_np_array(self, np_array) -> User:
+        return self._user_searcher.search_user_id(np_array)
+
+    def is_user_registered(self, np_array) -> bool:
+        return self._user_searcher.check_user_registered(np_array)
+
+    def get_user_image_by_video(self, video, image_name):
         file = self._handle_video(video)
         np_image = self._video_processor.extract_last_video_frame(file)
-        return self._media_converter.np_to_imageRGB_buffer(np_image,image_name)
+        return self._media_converter.np_to_imageRGB_buffer(np_image, image_name)
 
-    def _handle_image(self,image):
+    def _handle_image(self, image):
 
         if isinstance(image, bytes):
             return self._media_converter.binary_to_np(image)
@@ -283,26 +237,11 @@ class FaceRecognitionFacade:
         if isinstance(image, ContentFile):
             return self._media_converter.binary_to_np(image.read())
 
-
         return image
 
+    def _handle_video(self, video):
 
-    def _handle_video(self,video):
-
-        if isinstance(video,str):
+        if isinstance(video, str):
             return video
 
         return self._media_converter.video_data_to_video_chunks(video)
-
-
-
-
-
-
-
-
-
-
-
-
-

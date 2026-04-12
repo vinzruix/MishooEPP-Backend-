@@ -9,12 +9,12 @@ from face_detection.exeptions import NumFaceError, UserNotRegistered, NoFacesDat
 
 class FaceDetectionCreateAPIView(APIView):
 
-
-    def post(self,request):
+    @staticmethod
+    def post(request):
 
         try:
             worker, image = face_recognition.get_user_id_by_image(request.body)
-        except NumFaceError and NoFacesData as e:
+        except (NumFaceError, NoFacesData)as e:
             raise NotAcceptable({"error":f"{e}"})
         except UserNotRegistered as e:
             raise NotFound({"error":f"{e}"})

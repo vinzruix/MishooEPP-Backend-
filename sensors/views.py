@@ -38,7 +38,8 @@ class SensorNodeListCreateAPIView(APIView):
         return [IsAuthenticated()]
 
 
-    def post(self, request):
+    @staticmethod
+    def post(request):
         
         try:
             node = {
@@ -70,8 +71,8 @@ class SensorNodeListCreateAPIView(APIView):
 
         return Response({"success": f"Sensor creado"}, status=status.HTTP_201_CREATED)
 
-
-    def get(self,request):
+    @staticmethod
+    def get(request):
         node_data = SensorNode.objects.all().order_by("-id")
         serializer = SensorNodeSerializer(node_data,many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -87,8 +88,8 @@ class SensorNodeDetailPatchAPIView(APIView):
         return [IsAuthenticated()]
 
 
-
-    def get(self,request,sensor_node_id):
+    @staticmethod
+    def get(request,sensor_node_id):
 
         try:
             node_data = get_sensor_node(sensor_node_id)
@@ -98,8 +99,8 @@ class SensorNodeDetailPatchAPIView(APIView):
         serializer = SensorNodeSerializer(node_data,many=False)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-
-    def patch(self,request,sensor_node_id):
+    @staticmethod
+    def patch(request,sensor_node_id):
         try:
             node_data = get_sensor_node(sensor_node_id)
         except Exception as e:
@@ -114,7 +115,8 @@ class SensorNodeDetailPatchAPIView(APIView):
 
         raise NotAcceptable({"error":"error"})
 
-    def delete(self,request,sensor_node_id):
+    @staticmethod
+    def delete(request,sensor_node_id):
         try:
             sensor_node = get_sensor_node(sensor_node_id)
         except Exception as e:
@@ -136,7 +138,8 @@ class SensorsDataCreateAPIView(APIView):
 
         return [IsAuthenticated()]
 
-    def post(self, request):
+    @staticmethod
+    def post(request):
         try:
             create_all_sensor_data(
                 request.user,
@@ -159,7 +162,8 @@ class SensorDataDetailAPIView(APIView):
 
         return [IsAuthenticated()]
 
-    def get(self,request,sensor_node_id):
+    @staticmethod
+    def get(request,sensor_node_id):
 
         try:
             node_data = SensorNode.objects.get(id=sensor_node_id)
