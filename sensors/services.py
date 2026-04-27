@@ -27,7 +27,6 @@ def send_server_credentials(id_device, password, esp_url):
         "server" : ip
     }
 
-
     response = requests.post(f"{esp_url}/auth/", json=payload)
     
     if not response.ok:
