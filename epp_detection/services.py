@@ -1,10 +1,25 @@
-from ultralytics import YOLO
+from department.models import Department
+from epp_detection.models import EPPNode
 
-model = YOLO("eppmodel/best.pt")
+
+def create_epp_node(name, department, ip, user):
+    if EPPNode.objects.filter(id=user.username):
+        raise ValueError("There is a already a node with this id")
+
+    new_node = EPPNode()
+    new_node.id = user.username
+    new_node.name = name
+    new_node.department = Department.objects.get(name=department)
+    new_node.ip = ip
+    new_node.user_node = user
+    new_node.is_active = True
+    new_node.save()
+
+    return new_node
 
 
-def check_EPP_in_image(image):
-    classes = [1, 2, 3, 6, 7]
-    results = model(image, classes=classes, conf=0.5, verbose=False, stream=True )
-
-    return results
+def get_epp_node(epp_id):
+    try:
+        return EPPNode.objects.get(id=epp_id)
+    except EPPNode.DoesNotExist:
+        raise ValueError("Node not found")

@@ -13,6 +13,7 @@ class Node(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=30)
     location = models.CharField(max_length=30)
+
     is_active = models.BooleanField(default=False)
     ip = models.URLField(null=True)
     
