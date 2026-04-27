@@ -73,7 +73,7 @@ Creacion de departmentos
 --boundary
 Content-Disposition: form-data; name="video"; filename="Yahir.mov"
 
-< test_content/manu.mp4
+< test_content/Yahir.mov
 
 
 ### Create Node Sensor

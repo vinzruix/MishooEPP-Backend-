@@ -1,9 +1,10 @@
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
 
 from MishooEPP_Backend.core.instances import face_recognition
 from department.models import Department
 from face_detection.exeptions import UserRegistered
-from users.factory import WorkerCreator
+from users.factory import WorkerCreator, SensorNodeUser, SensorNodeCreator
 from users.models import User
 
 
@@ -48,7 +49,6 @@ def create_user(user, video):
                            )
 
     return new_user
-
 
 def check_passwords(password, password_confirmation):
     if password_confirmation == password:

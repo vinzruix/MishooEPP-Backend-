@@ -1,3 +1,5 @@
+from abc import abstractmethod
+
 from django.shortcuts import render
 from rest_framework import status
 from rest_framework.exceptions import NotFound
@@ -16,14 +18,18 @@ class AttendanceListAPIView(APIView):
 
     permission_classes = [permission_required("attendance.view_all_workerarrival")]
 
-    def get(self,request):
+
+    @staticmethod
+    def get(request):
         attendances = WorkerArrival.objects.order_by("-arrival_timestamp")
         serializer = WorkerArrivalSerializer(attendances,many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class UserAttendanceDetailAPIView(APIView):
-    def get(self,request,pk):
+
+    @staticmethod
+    def get(request,pk):
 
         user_attendance = WorkerArrival.objects.filter(worker_id=pk).order_by("-arrival_timestamp")
 

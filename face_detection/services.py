@@ -41,6 +41,7 @@ class UFFaceLocator(FaceLocator):
 
 
 
+
 class FaceEncoder(ABC):
 
     @abstractmethod
@@ -51,7 +52,7 @@ class FaceEncoder(ABC):
 class UFFaceEncoder(FaceEncoder):
 
     def __init__(self):
-        self._recognizer = EdgeFace(model_name=EdgeFaceWeights.S_GAMMA_05)
+        self._recognizer = EdgeFace(model_name=EdgeFaceWeights.XS_GAMMA_06)
 
     def encode_face(self, **kwargs):
         return  self._recognizer.get_normalized_embedding(kwargs.get('image'), kwargs.get("locations")).tolist()

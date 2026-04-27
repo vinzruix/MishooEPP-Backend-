@@ -1,4 +1,7 @@
 from abc import ABC, abstractmethod
+
+from django.contrib.auth.models import Permission
+
 from users.models import User
 
 class UserCreator(ABC):
@@ -56,11 +59,16 @@ class WorkerUser(UserProduct):
         return new_user
 
 
-
-
-
-
 class SensorNodeUser(UserProduct):
 
     def create(self, **kwargs):
-        pass
+        node = User()
+        node.username = kwargs.get('username')
+        node.set_password(kwargs.get('password'))
+        node.is_device = True
+        node.save()
+
+        node.user_permissions.add(Permission.objects.get(codename="create_data_sensor"))
+
+        return node
+
