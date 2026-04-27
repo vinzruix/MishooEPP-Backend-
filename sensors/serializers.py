@@ -3,8 +3,6 @@ from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import AuthUser, TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import Token
-from sympy import false
-from sympy.physics.units import temperature
 
 from sensors.models import Temperature, Humidity, Pressure, CO2, TVOC, SensorNode
 

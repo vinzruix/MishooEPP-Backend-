@@ -44,7 +44,7 @@ class SensorNodeListCreateAPIView(APIView):
         try:
             node = {
                 "name": request.data["name"],
-                "location": request.data["location"],
+                "department": request.data["department"],
                 "ip": request.data["ip"],
             }
 
@@ -61,7 +61,7 @@ class SensorNodeListCreateAPIView(APIView):
 
                 node_user = create_user_node(node_username, node_password)
 
-                create_sensor_node(node["name"], node["location"], node["ip"], node_user)
+                create_sensor_node(node["name"], node["department"], node["ip"], node_user)
 
                 send_server_credentials(node_username, node_password, node["ip"])
 

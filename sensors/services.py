@@ -3,6 +3,7 @@ import requests
 from django.contrib.auth.models import Permission
 from django.db import transaction
 
+from department.models import Department
 from sensors.models import SensorNode, Temperature, Humidity, CO2, TVOC
 from users.models import User
 
@@ -37,7 +38,7 @@ def send_server_credentials(id_device, password, esp_url):
     
 
 
-def create_sensor_node(name,location,ip, user):
+def create_sensor_node(name,department,ip, user):
 
     if SensorNode.objects.filter(id=user.username):
         raise ValueError("There is a already a node with this id")
@@ -45,7 +46,7 @@ def create_sensor_node(name,location,ip, user):
     new_node = SensorNode()
     new_node.id = user.username
     new_node.name = name
-    new_node.location = location
+    new_node.department = Department.objects.get(name=department)
     new_node.ip = ip
     new_node.user_node = user
     new_node.is_active = True

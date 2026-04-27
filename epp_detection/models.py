@@ -1,6 +1,7 @@
 from django.db import models
 
 from MishooEPP_Backend.core.models import Node
+from department.models import Department
 from users.models import User
 
 
@@ -9,4 +10,5 @@ from users.models import User
 
 class EPPNode(Node):
     user_node = models.OneToOneField(User, related_name="EPP_nodes", on_delete=models.CASCADE, null=True)
+    department = models.ForeignKey(Department, related_name="epp_nodes", on_delete=models.CASCADE)
 
