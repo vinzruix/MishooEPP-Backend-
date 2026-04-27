@@ -35,6 +35,23 @@ class DepartmentListApiView(APIView):
         serializer = DepartmentSerializer(departments, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    def post(self, request):
+
+        department = {
+            "name": request.data["name"],
+            "epp": request.data.getlist("epp"),
+            "permissions": request.data.getlist("permissions")
+        }
+
+        try:
+            with transaction.atomic():
+                new_group = create_group(department["name"], department["permissions"])
+                new_department = create_department(new_group, department["epp"])
+        except ValueError as e:
+            raise NotAcceptable({"error": f"{e}"})
+
+        return Response({"success": f"department {new_department.name} created"}, status=status.HTTP_201_CREATED)
+
 
 class DepartmentDetailApiView(APIView):
 

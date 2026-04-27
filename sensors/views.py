@@ -54,7 +54,7 @@ class SensorNodeListCreateAPIView(APIView):
 
         try:
             with transaction.atomic():
-                ping_url(node["ip"])
+                #ping_url(node["ip"])
 
                 node_username = uuid.uuid4()
                 node_password = secrets.token_urlsafe(16)
