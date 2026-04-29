@@ -1,3 +1,5 @@
+import json
+
 from django.contrib.auth.models import Group
 from django.db import transaction
 from django.shortcuts import render
@@ -39,7 +41,7 @@ class DepartmentListApiView(APIView):
 
         department = {
             "name": request.data["name"],
-            "epp": request.data.getlist("epp"),
+            "epp": json.loads(request.data["epp"]),
             "permissions": request.data.getlist("permissions")
         }
 
