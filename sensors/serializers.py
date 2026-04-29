@@ -12,7 +12,8 @@ class SensorNodeObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs: dict[str, Any]) -> dict[Any, Any]:
         try:
             data = super().validate(attrs)
-        except Exception:
+        except Exception as e:
+            print(e)
             raise AuthenticationFailed({"error":"invalid credentials"})
 
         
@@ -40,7 +41,7 @@ class SensorNodeObtainPairSerializer(TokenObtainPairSerializer):
 class SensorNodeSerializer(serializers.ModelSerializer):
     class Meta:
         model = SensorNode
-        fields = ["id","name","location","is_active","ip"]
+        fields = ["id","name" ,"is_active","ip"]
 
 class SensorBaseSerializer(serializers.ModelSerializer):
     class Meta:

@@ -9,6 +9,6 @@ from users.models import User
 
 
 class EPPNode(Node):
-    user_node = models.OneToOneField(User, related_name="EPP_nodes", on_delete=models.CASCADE, null=True)
+    user_node = models.OneToOneField(User, related_name="epp_nodes", on_delete=models.CASCADE, null=True)
     department = models.ForeignKey(Department, related_name="epp_nodes", on_delete=models.CASCADE)
 

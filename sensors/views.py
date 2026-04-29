@@ -44,7 +44,6 @@ class SensorNodeListCreateAPIView(APIView):
         try:
             node = {
                 "name": request.data["name"],
-                "department": request.data["department"],
                 "ip": request.data["ip"],
             }
 
@@ -53,17 +52,14 @@ class SensorNodeListCreateAPIView(APIView):
 
 
         try:
-            with transaction.atomic():
-                #ping_url(node["ip"])
+            node_username = uuid.uuid4()
+            node_password = secrets.token_urlsafe(16)
 
-                node_username = uuid.uuid4()
-                node_password = secrets.token_urlsafe(16)
+            node_user = create_user_node(node_username, node_password)
 
-                node_user = create_user_node(node_username, node_password)
+            create_sensor_node(node["name"], node["ip"], node_user)
 
-                create_sensor_node(node["name"], node["department"], node["ip"], node_user)
-
-                send_server_credentials(node_username, node_password, node["ip"])
+            send_server_credentials(node_username, node_password, node["ip"])
 
         except ValueError as e:
             raise NotAcceptable({"error":f"{e}"})
