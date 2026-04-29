@@ -33,7 +33,7 @@ class EPPNodeListCreateAPIView(APIView):
         try:
             node = {
                 "name": request.data["name"],
-                "department": request.data["deparment"],
+                "department": request.data["department"],
                 "ip": request.data["ip"],
             }
 
