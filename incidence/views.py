@@ -25,6 +25,17 @@ class IncidenceCreateListApiView(APIView):
 
 
     @staticmethod
+    def post(request):
+
+
+        image = request.FILES['image']
+        datetime = request.data['datetime']
+        missing_epp = request.data['missing_epp']
+        user = request.user
+
+
+
+    @staticmethod
     def get(request):
         epp_sensor_data = Incidence.objects.order_by("-id")
         serializer = IncidenceSerializer(epp_sensor_data, many=True)

@@ -115,7 +115,42 @@ Content-Type: application/json
   "hola" : "hola"
 }
 
+### Create a epp_node
+
+POST http://localhost:8000/epp_detection/api/epp_detection/node/
+Authorization: Bearer {{ access_token }}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="name"
+
+Hola
+
+--boundary
+Content-Disposition: form-data; name="department"
+
+Test2
+
+--boundary
+Content-Disposition: form-data; name="ip"
+
+http://172.16.20.253:8001
+
+### Create a sesnro_node
+
+POST http://localhost:8000/sensors/api/sensors/node/
+Authorization: Bearer {{ access_token }}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="name"
+
+Hola
 
 
+--boundary
+Content-Disposition: form-data; name="ip"
+
+http://192.168.68.106:8001
 
 

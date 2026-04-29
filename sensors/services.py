@@ -17,7 +17,7 @@ def ping_url(url):
     return True
 
 
-def send_server_credentials(id_device, password, esp_url):
+def send_server_credentials(id_device, password, esp_url,port):
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.connect(("8.8.8.8", 80))
     ip = s.getsockname()[0]
@@ -25,10 +25,10 @@ def send_server_credentials(id_device, password, esp_url):
     payload = {
         "id": str(id_device),
         "password": password,
-        "server" : ip
+        "server" : f"{ip}:{port}"
     }
 
-    response = requests.post(f"{esp_url}/auth/", json=payload)
+    response = requests.post(f"{esp_url}/Auth/api/credentials/", json=payload)
     
     if not response.ok:
         raise ValueError("The url server did not respond correctly")
@@ -38,7 +38,7 @@ def send_server_credentials(id_device, password, esp_url):
     
 
 
-def create_sensor_node(name,department,ip, user):
+def create_sensor_node(name,ip, user):
 
     if SensorNode.objects.filter(id=user.username):
         raise ValueError("There is a already a node with this id")
@@ -46,7 +46,6 @@ def create_sensor_node(name,department,ip, user):
     new_node = SensorNode()
     new_node.id = user.username
     new_node.name = name
-    new_node.department = Department.objects.get(name=department)
     new_node.ip = ip
     new_node.user_node = user
     new_node.is_active = True
@@ -61,6 +60,7 @@ def create_user_node(username,password):
 
 
     node = User()
+    node.is_active = True
     node.username = username
     node.set_password(password)
     node.is_device = True

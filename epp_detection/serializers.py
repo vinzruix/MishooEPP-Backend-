@@ -12,7 +12,7 @@ class EPPNodeObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs: dict[str, Any]) -> dict[Any, Any]:
         try:
             data = super().validate(attrs)
-        except Exception:
+        except Exception as e:
             raise AuthenticationFailed({"error": "invalid credentials"})
 
         if not EPPNode.objects.filter(user_node=self.user).exists():
@@ -30,7 +30,7 @@ class EPPNodeObtainPairSerializer(TokenObtainPairSerializer):
         token = super().get_token(user)
         token['is_device'] = True
         token['id_node'] = user.username
-        token['deparment'] = DepartmentSimpleSerializer(user.department)
+        token['department'] = DepartmentSimpleSerializer(user.epp_nodes.department).data
         return token
 
 
@@ -39,4 +39,4 @@ class EPPNodeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = EPPNode
-        fields = ["id","name","location","is_active","ip","department"]
+        fields = ["id","name","is_active","ip","department"]

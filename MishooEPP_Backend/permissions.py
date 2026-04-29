@@ -14,10 +14,13 @@ def permission_required(perm):
             return True
 
         def check_device_active(self,user):
-            try:
+
+            node = None
+
+            if user.sensor_nodes:
                 node = user.sensor_nodes
-            except Exception as e:
-                raise PermissionDenied({"error":f"{e}"})
+            if user.epp_nodes:
+                node = user.epp_nodes
 
             if not node.is_active:
                 raise PermissionDenied({"error":f"Device not active"})

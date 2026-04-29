@@ -42,7 +42,6 @@ class EPPNodeListCreateAPIView(APIView):
 
         try:
             with transaction.atomic():
-
                 node_username = uuid.uuid4()
                 node_password = secrets.token_urlsafe(16)
 
@@ -50,10 +49,14 @@ class EPPNodeListCreateAPIView(APIView):
 
                 create_epp_node(node["name"], node["department"], node["ip"], node_user)
 
-                send_server_credentials(node_username, node_password, node["ip"])
+
+                transaction.on_commit(
+                    lambda: send_server_credentials(node_username, node_password, node["ip"],request.get_port())
+                )
 
         except ValueError as e:
             raise NotAcceptable({"error": f"{e}"})
+
 
         return Response({"success": f"Sensor creado"}, status=status.HTTP_201_CREATED)
 

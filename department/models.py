@@ -13,4 +13,4 @@ class Department(models.Model):
 
     name = models.TextField(max_length=50, unique=True)
     group = models.OneToOneField(Group, on_delete=models.CASCADE)
-    epp = models.JSONField(default=list)
+    epp = models.JSONField(default=dict)

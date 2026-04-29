@@ -26,9 +26,9 @@ urlpatterns = [
     path("sensors/", include("sensors.urls")),
     path("attendance/", include("attendance.urls")),
     path("face_detection/", include("face_detection.urls")),
-    path("epp_detection/", include("face_detection.urls")),
+    path("epp_detection/", include("epp_detection.urls")),
     path("department/", include("department.urls")),
-    path("department/", include("incidence.urls")),
+    path("incidence/", include("incidence.urls")),
 
 ]
 
