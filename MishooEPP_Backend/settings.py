@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     'attendance',
     'epp_detection',
     'department',
+    'incidence',
 ]
 
 MIDDLEWARE = [
