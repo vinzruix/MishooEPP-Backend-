@@ -1,3 +1,4 @@
+import requests
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 
@@ -20,9 +21,13 @@ def sensor_node_handle_is_activated_change(sender,instance,**kwargs):
     if old_node.is_active != instance.is_active:
 
         if instance.is_active:
-            print("Aca yo hago que se active")
+            requests.patch(instance.ip, data={
+                "status" : True
+            })
 
         if not instance.is_active:
-            print("Yo lo apago xdxdd")
 
+            requests.patch(instance.ip, data={
+                "status" : False
+            })
     return None
