@@ -57,7 +57,7 @@ class IncidenceCreateListApiView(APIView):
         if serializer.is_valid():
             serializer.save()
 
-        return Response("fa")
+        return Response({"success":"Incidence created"},status=status.HTTP_201_CREATED)
 
 
 
