@@ -5,7 +5,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework_simplejwt.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, AuthUser
 
-from department.serializer import DepartmentSimpleSerializer
+from department.serializer import DepartmentSimpleSerializer, DepartmentSerializer
 from epp_detection.models import EPPNode
 
 class EPPNodeObtainPairSerializer(TokenObtainPairSerializer):
@@ -30,7 +30,7 @@ class EPPNodeObtainPairSerializer(TokenObtainPairSerializer):
         token = super().get_token(user)
         token['is_device'] = True
         token['id_node'] = user.username
-        token['department'] = DepartmentSimpleSerializer(user.epp_nodes.department).data
+        token['department'] = DepartmentSerializer(user.epp_nodes.department).data
         return token
 
 

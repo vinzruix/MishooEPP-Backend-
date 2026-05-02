@@ -1,10 +1,14 @@
 from django.shortcuts import render
 from rest_framework import status
+from rest_framework.exceptions import NotAcceptable, NotFound
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from MishooEPP_Backend.core.instances import face_recognition
 from MishooEPP_Backend.permissions import permission_required
+from face_detection.exeptions import NumFaceError, NoFacesData, UserNotRegistered
+from face_detection.services import MediaConverter
 from incidence.models import Incidence
 from incidence.serializers import IncidenceSerializer
 
@@ -27,11 +31,34 @@ class IncidenceCreateListApiView(APIView):
     @staticmethod
     def post(request):
 
+        worker = None
 
-        image = request.FILES['image']
-        datetime = request.data['datetime']
-        missing_epp = request.data['missing_epp']
-        user = request.user
+        try:
+            worker, image = face_recognition.get_user_id_by_image(request.FILES['image'])
+        except (NumFaceError, NoFacesData, UserNotRegistered) as e:
+            pass
+
+        if worker:
+            print(worker)
+
+
+        incidence = {
+            "image" : request.FILES['image'],
+            "missing_epp" : request.data.getlist('missing_epp'),
+            "user_node" : request.user.id,
+            "node" : request.user.epp_nodes.id,
+        }
+
+
+
+
+        serializer = IncidenceSerializer(data=incidence)
+
+        if serializer.is_valid():
+            serializer.save()
+
+        return Response("fa")
+
 
 
 

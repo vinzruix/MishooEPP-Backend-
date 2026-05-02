@@ -4,6 +4,7 @@ from incidence.models import Incidence
 
 
 class IncidenceSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Incidence
-        fields = ["id","image","missing_epp","datetime"]
+        fields = ["id","image","missing_epp","user_node","datetime",'node']

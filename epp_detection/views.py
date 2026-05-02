@@ -11,8 +11,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from MishooEPP_Backend.permissions import permission_required
 from epp_detection.models import EPPNode
 from epp_detection.serializers import EPPNodeObtainPairSerializer, EPPNodeSerializer
-from epp_detection.services import create_epp_node, get_epp_node
-from sensors.services import create_user_node, send_server_credentials
+from epp_detection.services import create_epp_node, get_epp_node, send_server_credentials
+from sensors.services import create_user_node
 
 
 # Create your views here.
@@ -22,7 +22,7 @@ class EPPNodeObtainPairSerializerAPIView(TokenObtainPairView):
 
 
 class EPPNodeListCreateAPIView(APIView):
-
+    
     def get_permissions(self):
         if self.request.method == "POST":
             return [permission_required("sensors.create_sensor")()]
@@ -51,7 +51,7 @@ class EPPNodeListCreateAPIView(APIView):
 
 
                 transaction.on_commit(
-                    lambda: send_server_credentials(node_username, node_password, node["ip"],request.get_port())
+                    lambda: send_server_credentials(node_username, node_password, node["ip"], request.get_port())
                 )
 
         except ValueError as e:

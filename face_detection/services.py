@@ -1,6 +1,10 @@
 import io
+import socket
 import tempfile
 from abc import abstractmethod, ABC
+
+import requests
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from uniface import EdgeFace, compute_similarity
 from uniface.constants import  YOLOv5FaceWeights, EdgeFaceWeights
 from uniface.detection import  YOLOv5Face
@@ -8,7 +12,10 @@ import cv2
 import numpy as np
 from PIL import Image
 from django.core.files.base import ContentFile
+
+from department.models import Department
 from face_detection.exeptions import NumFaceError, NoFacesData, UserNotRegistered
+from face_detection.models import CameraNode
 from users.models import User
 
 class FaceLocator(ABC):
@@ -237,6 +244,11 @@ class FaceRecognitionFacade:
         if isinstance(image, ContentFile):
             return self._media_converter.binary_to_np(image.read())
 
+
+        if isinstance(image, InMemoryUploadedFile):
+            return self._media_converter.binary_to_np(image.read())
+
+
         return image
 
     def _handle_video(self, video):
@@ -245,3 +257,50 @@ class FaceRecognitionFacade:
             return video
 
         return self._media_converter.video_data_to_video_chunks(video)
+
+
+
+
+
+
+
+def create_camera_node(name, department, ip, user):
+    if CameraNode.objects.filter(id=user.username):
+        raise ValueError("There is a already a node with this id")
+
+    new_node = CameraNode()
+    new_node.id = user.username
+    new_node.name = name
+    new_node.department = Department.objects.get(name=department)
+    new_node.ip = ip
+    new_node.user_node = user
+    new_node.is_active = True
+    new_node.save()
+
+    return new_node
+
+
+def send_server_credentials(id_device, password, esp_url, port):
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8", 80))
+    ip = s.getsockname()[0]
+
+    payload = {
+        "id": str(id_device),
+        "password": password,
+        "server": f"{ip}:{port}"
+    }
+
+    response = requests.post(f"{esp_url}/Auth/api/credentials/camera_node/", json=payload)
+
+    if not response.ok:
+        raise ValueError("The url server did not respond correctly")
+
+    return response.status_code
+
+
+def get_camera_node(camera_id):
+    try:
+        return CameraNode.objects.get(id=camera_id)
+    except CameraNode.DoesNotExist:
+        raise ValueError("Node not found")

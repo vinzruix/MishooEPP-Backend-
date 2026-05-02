@@ -1,6 +1,5 @@
 import secrets
 import uuid
-from django.db import transaction
 from django.utils.datastructures import MultiValueDictKeyError
 from rest_framework import status
 from rest_framework.exceptions import NotAcceptable
@@ -8,8 +7,6 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
-from torch.fx.experimental.unification.multipledispatch.utils import raises
-
 from MishooEPP_Backend.permissions import permission_required
 from sensors.models import Temperature, Humidity, CO2, TVOC, Pressure, SensorNode
 from sensors.serializers import TemperatureSerializer, HumiditySerializer, PressureSerializer, CO2Serializer, \
@@ -44,6 +41,7 @@ class SensorNodeListCreateAPIView(APIView):
         try:
             node = {
                 "name": request.data["name"],
+                "department": request.data["department"],
                 "ip": request.data["ip"],
             }
 
@@ -57,9 +55,9 @@ class SensorNodeListCreateAPIView(APIView):
 
             node_user = create_user_node(node_username, node_password)
 
-            create_sensor_node(node["name"], node["ip"], node_user)
+            create_sensor_node(node["name"], node["department"], node["ip"], node_user)
 
-            send_server_credentials(node_username, node_password, node["ip"])
+            send_server_credentials(node_username, node_password, node["ip"], request.get_port())
 
         except ValueError as e:
             raise NotAcceptable({"error":f"{e}"})

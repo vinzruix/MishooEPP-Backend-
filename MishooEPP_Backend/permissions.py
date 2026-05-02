@@ -1,5 +1,8 @@
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import BasePermission
+from sympy.codegen.ast import continue_
+
+from users.models import User
 
 
 def permission_required(perm):
@@ -17,10 +20,19 @@ def permission_required(perm):
 
             node = None
 
-            if user.sensor_nodes:
-                node = user.sensor_nodes
-            if user.epp_nodes:
-                node = user.epp_nodes
+            try:
+                if user.sensor_nodes:
+                    node = user.sensor_nodes
+            except Exception as e:
+                print(e)
+
+            try:
+                if user.epp_nodes:
+                    node = user.epp_nodes
+            except Exception as e:
+                print(e)
+
+
 
             if not node.is_active:
                 raise PermissionDenied({"error":f"Device not active"})

@@ -129,12 +129,12 @@ Hola
 --boundary
 Content-Disposition: form-data; name="department"
 
-Test2
+test3
 
 --boundary
 Content-Disposition: form-data; name="ip"
 
-http://172.16.20.253:8001
+http://192.168.68.108:8001
 
 ### Create a sesnro_node
 
@@ -154,3 +154,13 @@ Content-Disposition: form-data; name="ip"
 http://192.168.68.106:8001
 
 
+
+### Test
+PATCH http://localhost:8001/Auth/api/credentials/epp_node/
+Authorization: Bearer {{ access_token }}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="status"
+
+True
