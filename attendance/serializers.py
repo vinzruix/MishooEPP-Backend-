@@ -9,4 +9,4 @@ class WorkerArrivalSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = WorkerArrival
-        fields = ['id','worker','arrival_image','arrival_timestamp']
+        fields = ['id','worker','arrival_image','node','arrival_timestamp']

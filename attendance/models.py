@@ -24,5 +24,5 @@ class WorkerArrival(models.Model):
     arrival_timestamp = models.DateTimeField(default=timezone.now)
     arrival_image = models.ImageField(upload_to=arrival_image_path, null= True)
     node = models.ForeignKey(CameraNode, related_name="arrivals", on_delete=models.CASCADE, null=True)
-
+    user_node = models.ForeignKey(User, related_name="incidences", on_delete=models.DO_NOTHING, null=True)
 

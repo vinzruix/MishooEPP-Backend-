@@ -9,6 +9,8 @@ from attendance.models import WorkerArrival
 from attendance.serializers import WorkerArrivalSerializer
 from attendance.services import register_attendance_successfully
 from face_detection.exeptions import UserNotRegistered, NumFaceError, NoFacesData
+from face_detection.models import CameraNode
+from face_detection.serializers import CameraNodeSerializer
 
 
 # Create your views here.
@@ -24,41 +26,51 @@ class AttendanceListAPIView(APIView):
 
         return [IsAuthenticated()]
 
-
     @staticmethod
     def post(request):
 
         try:
             worker, image = face_recognition.get_user_id_by_image(request.body)
         except (NumFaceError, NoFacesData) as e:
-            raise NotAcceptable({"error":f"{e}"})
+            raise NotAcceptable({"error": f"{e}"})
         except UserNotRegistered as e:
-            raise NotFound({"error":f"{e}"})
+            raise NotFound({"error": f"{e}"})
 
-        register_attendance_successfully(worker, image)
+        arrival = {
+            "arrival_image": image,
+            "worker": worker,
+            "user_node": request.user.id,
+            "node": request.user.camera_nodes.id,
+        }
+
+        serializer = CameraNodeSerializer(data=arrival)
+
+        if not serializer.is_valid():
+            raise NotAcceptable()
+
+        if serializer.is_valid():
+            serializer.save()
 
         return Response({"success": f"user identified as {worker.first_name}"}, status=status.HTTP_201_CREATED)
 
     @staticmethod
     def get(request):
         attendances = WorkerArrival.objects.order_by("-arrival_timestamp")
-        serializer = WorkerArrivalSerializer(attendances,many=True)
+        serializer = WorkerArrivalSerializer(attendances, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class UserAttendanceDetailAPIView(APIView):
 
     @staticmethod
-    def get(request,pk):
-
+    def get(request, pk):
         user_attendance = WorkerArrival.objects.filter(worker_id=pk).order_by("-arrival_timestamp")
 
         if not user_attendance:
-            raise NotFound({"error":f"User id {pk} not found"})
-
+            raise NotFound({"error": f"User id {pk} not found"})
 
         serializer = WorkerArrivalSerializer(user_attendance, many=True)
-        return Response(serializer.data,status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class NodeAttendanceDetailAPIView(APIView):
@@ -72,4 +84,3 @@ class NodeAttendanceDetailAPIView(APIView):
 
         serializer = WorkerArrivalSerializer(node_attendance, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-

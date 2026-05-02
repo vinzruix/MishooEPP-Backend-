@@ -9,14 +9,14 @@ def permission_required(perm):
     class PermissionDynamic(BasePermission):
         def has_permission(self, request, view):
             if not request.user.has_perm(perm):
-                raise PermissionDenied({"error":f"permission {perm} not found"})
+                raise PermissionDenied({"error": f"permission {perm} not found"})
 
             if request.user.is_device:
                 self.check_device_active(request.user)
 
             return True
 
-        def check_device_active(self,user):
+        def check_device_active(self, user):
 
             node = None
 
@@ -32,10 +32,13 @@ def permission_required(perm):
             except Exception as e:
                 print(e)
 
-
+            try:
+                if user.camera_nodes:
+                    node = user.camera_nodes
+            except Exception as e:
+                    print(e)
 
             if not node.is_active:
-                raise PermissionDenied({"error":f"Device not active"})
-
+                raise PermissionDenied({"error": f"Device not active"})
 
     return PermissionDynamic
