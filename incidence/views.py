@@ -31,16 +31,6 @@ class IncidenceCreateListApiView(APIView):
     @staticmethod
     def post(request):
 
-        worker = None
-
-        try:
-            worker, image = face_recognition.get_user_id_by_image(request.FILES['image'])
-        except (NumFaceError, NoFacesData, UserNotRegistered) as e:
-            pass
-
-        if worker:
-            print(worker)
-
 
         incidence = {
             "image" : request.FILES['image'],
@@ -50,12 +40,17 @@ class IncidenceCreateListApiView(APIView):
         }
 
 
-
-
         serializer = IncidenceSerializer(data=incidence)
 
         if serializer.is_valid():
             serializer.save()
+
+
+        if not serializer.is_valid():
+            print(serializer.errors)
+            raise NotAcceptable()
+
+
 
         return Response({"success":"Incidence created"},status=status.HTTP_201_CREATED)
 

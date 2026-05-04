@@ -17,5 +17,5 @@ class Incidence(models.Model):
     datetime = models.DateTimeField(default=timezone.now())
     missing_epp = ArrayField(models.CharField(max_length=20), size=10)
     node = models.ForeignKey(EPPNode, related_name="incidences", on_delete=models.CASCADE)
-    image = models.ImageField(upload_to=arrival_image_path, null=True)
+    image = models.ImageField(upload_to=arrival_image_path)
     user_node = models.ForeignKey(User, related_name="incidences", on_delete=models.DO_NOTHING, null=True)
