@@ -8,6 +8,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
+from scipy.linalg import rq
+
 from MishooEPP_Backend.permissions import permission_required
 from epp_detection.models import EPPNode
 from epp_detection.serializers import EPPNodeObtainPairSerializer, EPPNodeSerializer
@@ -31,6 +33,9 @@ class EPPNodeListCreateAPIView(APIView):
     @staticmethod
     def post(request):
         try:
+
+
+
             node = {
                 "name": request.data["name"],
                 "department": request.data["department"],
@@ -51,7 +56,7 @@ class EPPNodeListCreateAPIView(APIView):
 
 
                 transaction.on_commit(
-                    lambda: send_server_credentials(node_username, node_password, node["ip"], request.get_port())
+                    lambda: send_server_credentials(node_username, node_password, node["ip"], request.get_port(), request.auth)
                 )
 
         except ValueError as e:

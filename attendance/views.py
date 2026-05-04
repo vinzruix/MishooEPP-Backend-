@@ -7,13 +7,9 @@ from MishooEPP_Backend.core.instances import face_recognition
 from MishooEPP_Backend.permissions import permission_required
 from attendance.models import WorkerArrival
 from attendance.serializers import WorkerArrivalSerializer
-from attendance.services import register_attendance_successfully
 from face_detection.exeptions import UserNotRegistered, NumFaceError, NoFacesData
-from face_detection.models import CameraNode
 from face_detection.serializers import CameraNodeSerializer
 
-
-# Create your views here.
 
 
 class AttendanceListAPIView(APIView):

@@ -22,7 +22,7 @@ def create_epp_node(name, department, ip, user):
     return new_node
 
 
-def send_server_credentials(id_device, password, esp_url, port):
+def send_server_credentials(id_device, password, esp_url, port,token):
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.connect(("8.8.8.8", 80))
     ip = s.getsockname()[0]
@@ -33,7 +33,10 @@ def send_server_credentials(id_device, password, esp_url, port):
         "server": f"{ip}:{port}"
     }
 
-    response = requests.post(f"{esp_url}/Auth/api/credentials/epp_node/", json=payload)
+    response = requests.post(f"{esp_url}/Auth/api/credentials/epp_node/", json=payload,
+                             headers={
+                                 "Authorization": f"Bearer {token}"
+                             })
 
     if not response.ok:
         raise ValueError("The url server did not respond correctly")
