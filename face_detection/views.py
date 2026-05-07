@@ -63,7 +63,7 @@ class CameraNodeCreateAPIView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class EPPNodeDetailPatchDeleteAPIView(APIView):
+class CameraNodeDetailPatchDeleteAPIView(APIView):
     def get_permissions(self):
         if self.request.method == "GET":
             return [permission_required("sensors.view_all_sensor")()]

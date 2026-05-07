@@ -38,6 +38,8 @@ def permission_required(perm):
             except Exception as e:
                     print(e)
 
+
+
             if not node.is_active:
                 raise PermissionDenied({"error": f"Device not active"})
 
