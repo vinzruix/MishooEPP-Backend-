@@ -11,10 +11,7 @@ class DepartmentSerializer(serializers.ModelSerializer):
         fields = ["id","name","epp","group","permission"]
         ordering = ["-id"]
 
-    def get_permission(self,obj):
-        return list(
-            obj.group.permissions.values_list("codename", flat=True)
-        )
+
 
 
 

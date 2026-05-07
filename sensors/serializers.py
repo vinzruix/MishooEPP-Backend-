@@ -4,7 +4,7 @@ from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import AuthUser, TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import Token
 
-from department.serializer import DepartmentSimpleSerializer
+from department.serializer import  DepartmentSerializer
 from sensors.models import Temperature, Humidity, Pressure, CO2, TVOC, SensorNode
 
 
@@ -40,7 +40,7 @@ class SensorNodeObtainPairSerializer(TokenObtainPairSerializer):
 
 
 class SensorNodeSerializer(serializers.ModelSerializer):
-    department = DepartmentSimpleSerializer
+    department = DepartmentSerializer
 
     class Meta:
         model = SensorNode
