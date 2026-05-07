@@ -35,7 +35,7 @@ class EPPNodeObtainPairSerializer(TokenObtainPairSerializer):
 
 
 class EPPNodeSerializer(serializers.ModelSerializer):
-    department = DepartmentSimpleSerializer()
+    department = DepartmentSerializer()
 
     class Meta:
         model = EPPNode
