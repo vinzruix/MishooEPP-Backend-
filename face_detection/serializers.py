@@ -39,7 +39,7 @@ class CameraNodeObtainPairSerializer(TokenObtainPairSerializer):
 
 
 class CameraNodeSerializer(serializers.ModelSerializer):
-    department = DepartmentSerializer
+    department = DepartmentSerializer()
 
     class Meta:
         model = CameraNode

@@ -40,7 +40,7 @@ class SensorNodeObtainPairSerializer(TokenObtainPairSerializer):
 
 
 class SensorNodeSerializer(serializers.ModelSerializer):
-    department = DepartmentSerializer
+    department = DepartmentSerializer()
 
     class Meta:
         model = SensorNode
