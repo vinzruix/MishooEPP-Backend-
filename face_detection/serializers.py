@@ -5,7 +5,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework_simplejwt.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, AuthUser
 
-from department.serializer import DepartmentSerializer
+from department.serializer import DepartmentSerializer, DepartmentSimpleSerializer
 from face_detection.models import CameraNode
 
 
@@ -15,6 +15,7 @@ class CameraNodeObtainPairSerializer(TokenObtainPairSerializer):
             data = super().validate(attrs)
         except Exception as e:
             raise AuthenticationFailed({"error": "invalid credentials"})
+
 
         if not CameraNode.objects.filter(user_node=self.user).exists():
             raise AuthenticationFailed({"error": "invalid credentials"})
@@ -38,6 +39,8 @@ class CameraNodeObtainPairSerializer(TokenObtainPairSerializer):
 
 
 class CameraNodeSerializer(serializers.ModelSerializer):
+    department = DepartmentSimpleSerializer
+
     class Meta:
         model = CameraNode
         fields = ["id","name","department","is_active", "ip"]
