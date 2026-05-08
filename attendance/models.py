@@ -18,7 +18,7 @@ class WorkerArrival(models.Model):
 
     def arrival_image_path(self, filename):
         now = self.arrival_timestamp
-        return f"arrival_images/{now:%Y}/{self.worker.username}/{now.year}{now.month}{now.microsecond}{filename}"
+        return f"arrival_images/{now:%Y}/{now.year}{now.month}{now.microsecond}{filename}"
 
     worker = models.ForeignKey(User, related_name='worker_arrivals', on_delete=models.CASCADE)
     arrival_timestamp = models.DateTimeField(default=timezone.now)
