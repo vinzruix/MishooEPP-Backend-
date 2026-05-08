@@ -107,9 +107,11 @@ class EPPNodeDetailPatchDeleteAPIView(APIView):
         if serializer.is_valid():
             serializer.save()
 
-            return Response(serializer.data, status=status.HTTP_200_OK)
+        if not serializer.is_valid():
+            raise NotAcceptable({"error": "error"})
 
-        raise NotAcceptable({"error": "error"})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
     @staticmethod
     def delete(request, epp_node_id):

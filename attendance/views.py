@@ -32,16 +32,19 @@ class AttendanceListAPIView(APIView):
         except UserNotRegistered as e:
             raise NotFound({"error": f"{e}"})
 
+
+
         arrival = {
             "arrival_image": image,
-            "worker": worker,
+            "worker": worker.pk,
             "user_node": request.user.id,
             "node": request.user.camera_nodes.id,
         }
 
-        serializer = CameraNodeSerializer(data=arrival)
+        serializer = WorkerArrivalSerializer(data=arrival)
 
         if not serializer.is_valid():
+            print(serializer.errors)
             raise NotAcceptable()
 
         if serializer.is_valid():
