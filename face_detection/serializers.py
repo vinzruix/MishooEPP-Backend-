@@ -39,8 +39,13 @@ class CameraNodeObtainPairSerializer(TokenObtainPairSerializer):
 
 
 class CameraNodeSerializer(serializers.ModelSerializer):
-    department = DepartmentSerializer()
 
     class Meta:
         model = CameraNode
         fields = ["id","name","department","is_active", "ip"]
+
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        rep["department"] = DepartmentSerializer(instance.department).data
+        return rep

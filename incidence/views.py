@@ -47,9 +47,7 @@ class IncidenceCreateListApiView(APIView):
 
 
         if not serializer.is_valid():
-            print(serializer.errors)
             raise NotAcceptable()
-
 
 
         return Response({"success":"Incidence created"},status=status.HTTP_201_CREATED)

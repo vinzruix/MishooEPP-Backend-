@@ -1,5 +1,7 @@
 import secrets
 import uuid
+
+from django.db import transaction
 from django.utils.datastructures import MultiValueDictKeyError
 from rest_framework import status
 from rest_framework.exceptions import NotAcceptable
@@ -34,10 +36,9 @@ class SensorNodeListCreateAPIView(APIView):
             return [permission_required("sensors.view_all_sensor")()]
         return [IsAuthenticated()]
 
-
     @staticmethod
     def post(request):
-        
+
         try:
             node = {
                 "name": request.data["name"],
@@ -46,29 +47,33 @@ class SensorNodeListCreateAPIView(APIView):
             }
 
         except MultiValueDictKeyError as e:
-            raise NotAcceptable({"error":f"value missing {e}"})
+            raise NotAcceptable({"error": f"value missing {e}"})
 
+        with transaction.atomic():
+            try:
+                node_username = uuid.uuid4()
+                node_password = secrets.token_urlsafe(16)
+                node_user = create_user_node(node_username, node_password)
+                create_sensor_node(node["name"], node["department"], node["ip"], node_user)
 
-        try:
-            node_username = uuid.uuid4()
-            node_password = secrets.token_urlsafe(16)
+                def send_credentials_safe():
+                    try:
+                        send_server_credentials(node_username, node_password, node["ip"], request.get_port())
+                    except ValueError:
+                        print("Error enviando credenciales")
 
-            node_user = create_user_node(node_username, node_password)
+                transaction.on_commit(send_credentials_safe)
 
-            create_sensor_node(node["name"], node["department"], node["ip"], node_user)
-
-            send_server_credentials(node_username, node_password, node["ip"], request.get_port())
-
-        except ValueError as e:
-            raise NotAcceptable({"error":f"{e}"})
-            
+            except ValueError:
+                raise NotAcceptable()
 
         return Response({"success": f"Sensor creado"}, status=status.HTTP_201_CREATED)
+
 
     @staticmethod
     def get(request):
         node_data = SensorNode.objects.all().order_by("-id")
-        serializer = SensorNodeSerializer(node_data,many=True)
+        serializer = SensorNodeSerializer(node_data, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -81,46 +86,54 @@ class SensorNodeDetailPatchAPIView(APIView):
             return [permission_required("sensors.create_sensor")()]
         return [IsAuthenticated()]
 
-
     @staticmethod
-    def get(request,sensor_node_id):
+    def get(request, sensor_node_id):
 
         try:
             node_data = get_sensor_node(sensor_node_id)
         except Exception as e:
-            raise NotAcceptable({"error":f"{e}"})
+            raise NotAcceptable({"error": f"{e}"})
 
-        serializer = SensorNodeSerializer(node_data,many=False)
+        serializer = SensorNodeSerializer(node_data, many=False)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @staticmethod
-    def patch(request,sensor_node_id):
+    def patch(request, sensor_node_id):
         try:
             node_data = get_sensor_node(sensor_node_id)
         except Exception as e:
-            raise NotAcceptable({"error":f"{e}"})
+            raise NotAcceptable({"error": f"{e}"})
 
         serializer = SensorNodeSerializer(instance=node_data, data=request.data, partial=True)
 
         if serializer.is_valid():
             serializer.save()
 
-            return Response(serializer.data,status=status.HTTP_200_OK)
+        if not serializer.is_valid():
+            raise NotAcceptable()
 
-        raise NotAcceptable({"error":"error"})
+        instance = serializer.instance
+        node_password = secrets.token_urlsafe(16)
+        instance.sensor_user.set_password(node_password)
+
+        try:
+            send_server_credentials(instance.sensor_user.username, node_password, instance.sensor_user.ip,
+                                    request.get_port())
+        except ValueError as e:
+            raise NotAcceptable(f"{e}")
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @staticmethod
-    def delete(request,sensor_node_id):
+    def delete(request, sensor_node_id):
         try:
             sensor_node = get_sensor_node(sensor_node_id)
         except Exception as e:
-            raise NotAcceptable({"error":f"{e}"})
+            raise NotAcceptable({"error": f"{e}"})
 
         sensor_node.delete()
 
-        return Response({"success":f"{sensor_node.id} eliminated"}, status.HTTP_200_OK)
-
-
+        return Response({"success": f"{sensor_node.id} eliminated"}, status.HTTP_200_OK)
 
 
 class SensorsDataCreateAPIView(APIView):
@@ -143,10 +156,9 @@ class SensorsDataCreateAPIView(APIView):
                 request.POST["tvoc"],
             )
         except Exception as e:
-            raise NotAcceptable({"error":f"{e}"})
+            raise NotAcceptable({"error": f"{e}"})
 
-        return Response({"success":"Data saved"},status=status.HTTP_201_CREATED)
-
+        return Response({"success": "Data saved"}, status=status.HTTP_201_CREATED)
 
 
 class SensorDataDetailAPIView(APIView):
@@ -157,23 +169,15 @@ class SensorDataDetailAPIView(APIView):
         return [IsAuthenticated()]
 
     @staticmethod
-    def get(request,sensor_node_id):
+    def get(request, sensor_node_id):
 
         try:
             node_data = SensorNode.objects.get(id=sensor_node_id)
         except Exception as e:
-            raise NotAcceptable({"error":f"{e}"})
+            raise NotAcceptable({"error": f"{e}"})
 
-
-        serializer = SensorDataSerializer(node_data,many=False)
-        return Response(serializer.data,status=status.HTTP_200_OK)
-
-
-
-
-
-
-
+        serializer = SensorDataSerializer(node_data, many=False)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class BaseSensorListAPIView(APIView):

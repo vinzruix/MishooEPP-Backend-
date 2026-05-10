@@ -38,21 +38,25 @@ class CameraNodeCreateAPIView(APIView):
         except MultiValueDictKeyError as e:
             raise NotAcceptable({"error": f"value missing {e}"})
 
+        node_user = False
+        new_node = False
+
         try:
-            with transaction.atomic():
-                node_username = uuid.uuid4()
-                node_password = secrets.token_urlsafe(16)
+            node_username = uuid.uuid4()
+            node_password = secrets.token_urlsafe(16)
+            node_user = create_user_node(node_username, node_password)
+            new_node = create_camera_node(node["name"], node["department"], node["ip"], node_user)
 
-                node_user = create_user_node(node_username, node_password)
-
-                create_camera_node(node["name"], node["department"], node["ip"], node_user)
-
-                transaction.on_commit(
-                    lambda: send_server_credentials(node_username, node_password, node["ip"], request.get_port())
-                )
+            send_server_credentials(node_username, node_password, node["ip"], request.get_port())
 
         except ValueError as e:
-            raise NotAcceptable({"error": f"{e}"})
+            if node_user:
+                node_user.delete()
+
+            if new_node:
+                node_user.delete()
+
+            raise NotAcceptable(f"{e}")
 
         return Response({"success": f"Sensor creado"}, status=status.HTTP_201_CREATED)
 
@@ -98,9 +102,20 @@ class CameraNodeDetailPatchDeleteAPIView(APIView):
         if serializer.is_valid():
             serializer.save()
 
-            return Response(serializer.data, status=status.HTTP_200_OK)
+        if not serializer.is_valid():
+            raise NotAcceptable()
 
-        raise NotAcceptable({"error": "error"})
+        instance = serializer.instance
+        node_password = secrets.token_urlsafe(16)
+        instance.sensor_user.set_password(node_password)
+
+        try:
+            send_server_credentials(instance.sensor_user.username, node_password, instance.sensor_user.ip,
+                                    request.get_port())
+        except ValueError as e:
+            raise NotAcceptable(f"{e}")
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @staticmethod
     def delete(request, camera_id):
@@ -111,4 +126,4 @@ class CameraNodeDetailPatchDeleteAPIView(APIView):
 
         sensor_node.delete()
 
-        return Response({"success": f"{camera_id.id} eliminated"}, status.HTTP_200_OK)
+        return Response({"success": f"Sensor {sensor_node.id} eliminado"}, status.HTTP_200_OK)

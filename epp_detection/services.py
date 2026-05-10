@@ -33,13 +33,18 @@ def send_server_credentials(id_device, password, esp_url, port,token):
         "server": f"{ip}:{port}"
     }
 
-    response = requests.post(f"{esp_url}/Auth/api/credentials/epp_node/", json=payload,
-                             headers={
-                                 "Authorization": f"Bearer {token}"
-                             })
 
-    if not response.ok:
-        raise ValueError("The url server did not respond correctly")
+    try:
+        response = requests.post(f"{esp_url}/Auth/api/credentials/epp_node/", json=payload,
+                                 headers={
+                                     "Authorization": f"Bearer {token}"
+                                 })
+
+        if not response.ok:
+            raise ValueError("The url server did not respond correctly")
+
+    except requests.exceptions.ConnectionError:
+        raise ValueError("Server down")
 
     return response.status_code
 
