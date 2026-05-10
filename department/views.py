@@ -1,15 +1,11 @@
 import json
-
-from django.contrib.auth.models import Group
 from django.db import transaction
-from django.shortcuts import render
 from rest_framework import status
-from rest_framework.decorators import permission_classes
 from rest_framework.exceptions import NotAcceptable
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from sympy import true
+from rest_framework.viewsets import ViewSet
 
 from MishooEPP_Backend.permissions import permission_required
 from department.models import Department
@@ -20,24 +16,31 @@ from department.services import create_group, create_department, get_department
 # Create your views here.
 
 
-class DepartmentListApiView(APIView):
+class DepartmentViewSet(ViewSet):
 
     def get_permissions(self):
 
-        if self.request.method == "GET":
+        if self.action == "list":
             return [permission_required('department.view_all_department')()]
-        if self.request.method == "POST":
+        if self.action == "create":
             return [permission_required("department.create_department")()]
+        if self.action == "partial_update":
+            return [permission_required("department.create_department")()]
+        if self.action == "destroy":
+            return [permission_required("department.create_department")()]
+
 
         return [IsAuthenticated()]
 
-    def get(self,request):
+    @staticmethod
+    def list(request):
 
         departments = Department.objects.all()
         serializer = DepartmentSerializer(departments, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def post(self, request):
+    @staticmethod
+    def create(request):
 
         department = {
             "name": request.data["name"],
@@ -52,12 +55,10 @@ class DepartmentListApiView(APIView):
         except ValueError as e:
             raise NotAcceptable({"error": f"{e}"})
 
-        return Response({"success": f"department {new_department.name} created"}, status=status.HTTP_201_CREATED)
+        return Response({"success": f"Departamento {new_department.name} creado"}, status=status.HTTP_201_CREATED)
 
-
-class DepartmentDetailApiView(APIView):
-
-    def patch(self,request,department_id):
+    @staticmethod
+    def partial_update(request,department_id):
         try:
             department = get_department(department_id)
         except Exception as e:
@@ -67,12 +68,16 @@ class DepartmentDetailApiView(APIView):
 
         if serializer.is_valid():
             serializer.save()
-            return Response({"success":f"Departamento actualizado"})
+
+        if not serializer.is_valid():
+            raise NotAcceptable({"error": f"data not valid"})
+
+        return Response({"success":f"Departamento actualizado"})
 
 
-        raise NotAcceptable({"error":f"data not valid"})
 
-    def delete(self,request,department_id):
+    @staticmethod
+    def destroy(request,department_id):
         try:
             department = get_department(department_id)
         except Exception as e:
@@ -87,14 +92,15 @@ class DepartmentDetailApiView(APIView):
 
 
 
+class DepartmentSimpleViewSet(ViewSet):
 
+    def get_permissions(self):
+        if self.action == "list":
+            return [permission_required("department.view_all_department")]
+        return [IsAuthenticated()]
 
-
-class DepartmentListSimpleApiView(APIView):
-
-    permission_classes = [permission_required("users.create_user") | permission_required("department.view_all_department")]
-
-    def get(self,request):
+    @staticmethod
+    def list(request):
         departments = Department.objects.all()
         serializer = DepartmentSimpleSerializer(departments, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
