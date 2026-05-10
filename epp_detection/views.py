@@ -14,7 +14,7 @@ from MishooEPP_Backend.permissions import permission_required
 from epp_detection.models import EPPNode
 from epp_detection.serializers import EPPNodeObtainPairSerializer, EPPNodeSerializer
 from epp_detection.services import create_epp_node, get_epp_node, send_server_credentials
-from sensors.services import create_user_node
+from sensors.services import create_user_node, create_sensor_node
 
 
 # Create your views here.
@@ -24,7 +24,7 @@ class EPPNodeObtainPairSerializerAPIView(TokenObtainPairView):
 
 
 class EPPNodeListCreateAPIView(APIView):
-    
+
     def get_permissions(self):
         if self.request.method == "POST":
             return [permission_required("sensors.create_sensor")()]
@@ -33,8 +33,6 @@ class EPPNodeListCreateAPIView(APIView):
     @staticmethod
     def post(request):
         try:
-
-
 
             node = {
                 "name": request.data["name"],
@@ -45,23 +43,26 @@ class EPPNodeListCreateAPIView(APIView):
         except MultiValueDictKeyError as e:
             raise NotAcceptable({"error": f"value missing {e}"})
 
+        node_user = False
+        new_node = False
+
         try:
-            with transaction.atomic():
-                node_username = uuid.uuid4()
-                node_password = secrets.token_urlsafe(16)
 
-                node_user = create_user_node(node_username, node_password)
+            node_username = uuid.uuid4()
+            node_password = secrets.token_urlsafe(16)
+            node_user = create_user_node(node_username, node_password)
+            new_node = create_sensor_node(node["name"], node["department"], node["ip"], node_user)
 
-                create_epp_node(node["name"], node["department"], node["ip"], node_user)
-
-
-                transaction.on_commit(
-                    lambda: send_server_credentials(node_username, node_password, node["ip"], request.get_port(), request.auth)
-                )
+            send_server_credentials(node_username, node_password, node["ip"], request.get_port(), request.auth)
 
         except ValueError as e:
-            raise NotAcceptable({"error": f"{e}"})
+            if node_user:
+                node_user.delete()
 
+            if new_node:
+                node_user.delete()
+
+            raise NotAcceptable(f"{e}")
 
         return Response({"success": f"Sensor creado"}, status=status.HTTP_201_CREATED)
 
@@ -108,10 +109,19 @@ class EPPNodeDetailPatchDeleteAPIView(APIView):
             serializer.save()
 
         if not serializer.is_valid():
-            raise NotAcceptable({"error": "error"})
+            raise NotAcceptable()
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        instance = serializer.instance
+        node_password = secrets.token_urlsafe(16)
+        instance.sensor_user.set_password(node_password)
 
+        try:
+            send_server_credentials(instance.sensor_user.username, node_password, instance.sensor_user.ip,
+                                    request.get_port(), request.auth)
+        except ValueError as e:
+            raise NotAcceptable(f"{e}")
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @staticmethod
     def delete(request, epp_node_id):
@@ -122,4 +132,4 @@ class EPPNodeDetailPatchDeleteAPIView(APIView):
 
         sensor_node.delete()
 
-        return Response({"success": f"{epp_node_id.id} eliminated"}, status.HTTP_200_OK)
+        return Response({"success": f"{sensor_node.id} eliminated"}, status.HTTP_200_OK)

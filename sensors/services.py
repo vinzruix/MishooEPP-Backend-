@@ -28,10 +28,17 @@ def send_server_credentials(id_device, password, esp_url,port):
         "server" : f"{ip}:{port}"
     }
 
-    response = requests.post(f"{esp_url}/Auth/api/credentials/sensor_node/", json=payload)
-    
-    if not response.ok:
-        raise ValueError("The url server did not respond correctly")
+    try:
+        response = requests.post(f"{esp_url}/Auth/api/credentials/sensor_node/", json=payload)
+
+        if not response.ok:
+            raise ValueError("The url server did not respond correctly")
+
+
+    except (requests.exceptions.ConnectionError, requests.exceptions.MissingSchema)as e:
+        raise ValueError("Server down")
+
+
 
     return response.status_code
 
