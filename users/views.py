@@ -27,10 +27,10 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 class UserViewSet(ViewSet):
 
     def get_permissions(self):
-        if self.request.method == "list":
+        if self.action == "list":
             return [permission_required("users.view_all_user")()]
 
-        if self.request.method == "create":
+        if self.action == "create":
             return [permission_required("users.create_user")()]
 
         return [IsAuthenticated()]
