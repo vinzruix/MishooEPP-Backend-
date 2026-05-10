@@ -7,6 +7,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
+from rest_framework.viewsets import ViewSet
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from face_detection.exeptions import UserRegistered
@@ -20,19 +21,29 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
 
-class UserListCreateAPIView(APIView):
+
+
+
+class UserViewSet(ViewSet):
 
     def get_permissions(self):
-        if self.request.method == "GET":
+        if self.request.method == "list":
             return [permission_required("users.view_all_user")()]
 
-        if self.request.method == "POST":
+        if self.request.method == "create":
             return [permission_required("users.create_user")()]
 
         return [IsAuthenticated()]
 
+
     @staticmethod
-    def post(request):
+    def list(request):
+        user = User.objects.filter(is_device=False, is_staff=False)
+        serializer = UserSerializer(user, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @staticmethod
+    def create(request):
 
         try:
             video = request.FILES['video']
@@ -47,39 +58,31 @@ class UserListCreateAPIView(APIView):
             }
 
         except MultiValueDictKeyError as e:
-            raise NotAcceptable({"error": f"value missing {e}"})
-
+            raise NotAcceptable({"error": f"Valor vacio {e}"})
 
         for key, value in user.items():
             if not value:
-                raise NotAcceptable({"error": f"Parameter empty:{key}"})
-    
+                raise NotAcceptable({"error": f"Parametro: {key} vacio"})
+
         try:
             with transaction.atomic():
-
                 create_user(user, video)
-    
+
         except (UserRegistered, ValueError) as e:
             raise ValidationError({"error": f"{e}"})
         except PermissionError as e:
             raise NotAcceptable({"error": f"{e}"})
-    
+
         return Response({"success": "Usuario creado"}, status=status.HTTP_201_CREATED)
 
     @staticmethod
-    def get( request):
-        user = User.objects.filter(is_device=False, is_staff=False)
-        serializer = UserSerializer(user, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def retrieve(request, pk):
 
-
-class UserDetailAPIView(APIView):
-
-    @staticmethod
-    def get( request, pk):
         try:
             user = User.objects.get(pk=pk)
-            serializer = UserSerializer(user)
-            return Response(serializer.data, status=status.HTTP_200_OK)
         except User.DoesNotExist:
             raise NotFound({"error": "User does not exist"})
+
+        serializer = UserSerializer(user)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
