@@ -96,7 +96,7 @@ class DepartmentSimpleViewSet(ViewSet):
 
     def get_permissions(self):
         if self.action == "list":
-            return [permission_required("department.view_all_department")]
+            return [permission_required("department.view_all_department")()]
         return [IsAuthenticated()]
 
     @staticmethod

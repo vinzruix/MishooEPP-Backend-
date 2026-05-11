@@ -60,6 +60,6 @@ class IncidenceViewSet(ViewSet):
 
     @staticmethod
     def retrieve(request,epp_node_id):
-        epp_sensor_data = Incidence.objects.filter(node_id=epp_node_id)
+        epp_sensor_data = Incidence.objects.filter(node_id=epp_node_id).order_by("-id")
         serializer = IncidenceSerializer(epp_sensor_data, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

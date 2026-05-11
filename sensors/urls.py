@@ -3,15 +3,15 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 from sensors.views import TemperatureListAPIView, HumidityListAPIView, CO2ListAPIView, \
     TVOCListAPIView, \
-    SensorNodeListCreateAPIView, SensorNodeObtainPairSerializerAPIView, \
-    SensorsDataCreateAPIView, SensorDataDetailAPIView, SensorNodeDetailPatchAPIView
+    SensorNodeObtainPairSerializerAPIView, \
+    SensorsDataCreateAPIView, SensorDataDetailAPIView, SensorNodeViewSet
 
 urlpatterns = [
 
-    path("api/sensors/node/", SensorNodeListCreateAPIView.as_view()),
+    path("api/sensors/node/", SensorNodeViewSet.as_view({"post":"create","get":"list"})),
     path("api/sensors/node/token/", SensorNodeObtainPairSerializerAPIView.as_view()),
     path("api/sensors/node/token/refresh/", TokenRefreshView.as_view()),
-    path("api/sensors/node/<str:sensor_node_id>/", SensorNodeDetailPatchAPIView.as_view()),
+    path("api/sensors/node/<str:sensor_node_id>/", SensorNodeViewSet.as_view({"patch":"partial_update","delete":"destroy","get":"retrieve"})),
 
     path('api/sensors/', SensorsDataCreateAPIView.as_view()),
 
