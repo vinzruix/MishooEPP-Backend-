@@ -109,10 +109,10 @@ class EPPNodeViewSet(ViewSet):
 
         instance = serializer.instance
         node_password = secrets.token_urlsafe(16)
-        instance.sensor_user.set_password(node_password)
+        instance.user_node.set_password(node_password)
 
         try:
-            send_server_credentials(instance.sensor_user.username, node_password, instance.sensor_user.ip,
+            send_server_credentials(instance.user_node.username, node_password, instance.user_node.ip,
                                     request.get_port(), request.auth)
         except ValueError as e:
             raise NotAcceptable(f"{e}")
