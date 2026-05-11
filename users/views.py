@@ -22,8 +22,6 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
 
 
-
-
 class UserViewSet(ViewSet):
 
     def get_permissions(self):
