@@ -17,7 +17,7 @@ from MishooEPP_Backend.sensor_factories import SensorNodeCreator
 from sensors.models import Temperature, Humidity, CO2, TVOC, Pressure, SensorNode
 from sensors.serializers import TemperatureSerializer, HumiditySerializer, PressureSerializer, CO2Serializer, \
     TVOCSerializer, SensorNodeObtainPairSerializer, SensorNodeSerializer, SensorDataSerializer
-from sensors.services import ping_url, create_user_node, create_sensor_node, send_server_credentials, get_sensor_node, \
+from sensors.services import ping_url, create_user_node, create_sensor_node, send_server_credentials, \
     create_all_sensor_data
 
 
@@ -85,21 +85,22 @@ class SensorNodeViewSet(ViewSet):
     def retrieve(request, sensor_node_id):
 
         try:
-            node_data = get_sensor_node(sensor_node_id)
-        except Exception as e:
-            raise NotAcceptable({"error": f"{e}"})
+            sensor_node = SensorNode.objects.get(id=sensor_node_id)
+        except SensorNode.DoesNotExist:
+            raise NotAcceptable({"error": f"El sensor no existe"})
 
-        serializer = SensorNodeSerializer(node_data, many=False)
+
+        serializer = SensorNodeSerializer(sensor_node, many=False)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @staticmethod
     def partial_update(request, sensor_node_id):
         try:
-            node_data = get_sensor_node(sensor_node_id)
-        except Exception as e:
-            raise NotAcceptable({"error": f"{e}"})
+            sensor_node = SensorNode.objects.get(id=sensor_node_id)
+        except SensorNode.DoesNotExist:
+            raise NotAcceptable({"error": f"El sensor no existe"})
 
-        serializer = SensorNodeSerializer(instance=node_data, data=request.data, partial=True)
+        serializer = SensorNodeSerializer(instance=sensor_node, data=request.data, partial=True)
 
         if serializer.is_valid():
             serializer.save()
@@ -121,10 +122,11 @@ class SensorNodeViewSet(ViewSet):
 
     @staticmethod
     def destroy(request, sensor_node_id):
+
         try:
-            sensor_node = get_sensor_node(sensor_node_id)
-        except Exception as e:
-            raise NotAcceptable({"error": f"{e}"})
+            sensor_node =  SensorNode.objects.get(id=sensor_node_id)
+        except SensorNode.DoesNotExist as e:
+            raise NotAcceptable({"error": f"El sensor no existe"})
 
         sensor_node.delete()
 
@@ -168,8 +170,8 @@ class SensorDataDetailAPIView(APIView):
 
         try:
             node_data = SensorNode.objects.get(id=sensor_node_id)
-        except Exception as e:
-            raise NotAcceptable({"error": f"{e}"})
+        except SensorNode.DoesNotExist:
+            raise NotAcceptable({"error": f"El sensor no existe"})
 
         serializer = SensorDataSerializer(node_data, many=False)
         return Response(serializer.data, status=status.HTTP_200_OK)

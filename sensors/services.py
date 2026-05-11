@@ -79,11 +79,7 @@ def create_user_node(username,password):
     
     return node
 
-def get_sensor_node(sensor_id):
-    try:
-        return SensorNode.objects.get(id=sensor_id)
-    except SensorNode.DoesNotExist:
-        raise ValueError("Node not found")
+
 
 
 def create_all_sensor_data(user,tem,hum,co2,tvoc):
