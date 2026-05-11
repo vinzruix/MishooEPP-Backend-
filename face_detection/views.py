@@ -15,7 +15,7 @@ from MishooEPP_Backend.permissions import permission_required
 from MishooEPP_Backend.sensor_factories import CameraNodeCreator
 from face_detection.models import CameraNode
 from face_detection.serializers import CameraNodeObtainPairSerializer, CameraNodeSerializer
-from face_detection.services import create_camera_node, send_server_credentials, get_camera_node
+from face_detection.services import create_camera_node, send_server_credentials
 from sensors.services import create_user_node
 
 
@@ -69,26 +69,25 @@ class CameraNodeViewSet(ViewSet):
         serializer = CameraNodeSerializer(node_data, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-
     @staticmethod
     def retrieve(request, camera_id):
 
         try:
-            node_data = get_camera_node(camera_id)
-        except Exception as e:
-            raise NotAcceptable({"error": f"{e}"})
+            camera_node = CameraNode.objects.get(id=camera_id)
+        except CameraNode.DoesNotExist as e:
+            raise NotAcceptable({"error": f"El sensor no existe"})
 
-        serializer = CameraNodeSerializer(node_data, many=False)
+        serializer = CameraNodeSerializer(camera_node, many=False)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @staticmethod
     def partial_update(request, camera_id):
         try:
-            node_data = get_camera_node(camera_id)
-        except Exception as e:
-            raise NotAcceptable({"error": f"{e}"})
+            camera_node = CameraNode.objects.get(id=camera_id)
+        except CameraNode.DoesNotExist as e:
+            raise NotAcceptable({"error": f"El sensor no existe"})
 
-        serializer = CameraNodeSerializer(instance=node_data, data=request.data, partial=True)
+        serializer = CameraNodeSerializer(instance=camera_node, data=request.data, partial=True)
 
         if serializer.is_valid():
             serializer.save()
@@ -111,10 +110,10 @@ class CameraNodeViewSet(ViewSet):
     @staticmethod
     def destroy(request, camera_id):
         try:
-            sensor_node = get_camera_node(camera_id)
-        except Exception as e:
-            raise NotAcceptable({"error": f"{e}"})
+            camera_node = CameraNode.objects.get(id=camera_id)
+        except CameraNode.DoesNotExist:
+            raise NotAcceptable({"error": f"El sensor no existe"})
 
-        sensor_node.delete()
+        camera_node.delete()
 
-        return Response({"success": f"Sensor {sensor_node.id} eliminado"}, status.HTTP_200_OK)
+        return Response({"success": f"Sensor {camera_node.id} eliminado"}, status.HTTP_200_OK)

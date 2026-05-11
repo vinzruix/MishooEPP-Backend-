@@ -52,6 +52,7 @@ class DepartmentViewSet(ViewSet):
             with transaction.atomic():
                 new_group = create_group(department["name"], department["permissions"])
                 new_department = create_department(new_group, department["epp"])
+
         except ValueError as e:
             raise NotAcceptable({"error": f"{e}"})
 

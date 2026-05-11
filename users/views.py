@@ -81,7 +81,7 @@ class UserViewSet(ViewSet):
         try:
             user = User.objects.get(pk=pk)
         except User.DoesNotExist:
-            raise NotFound({"error": "User does not exist"})
+            raise NotFound({"error": "El usuario no existe"})
 
         serializer = UserSerializer(user)
 

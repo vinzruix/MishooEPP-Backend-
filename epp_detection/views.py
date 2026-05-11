@@ -82,22 +82,24 @@ class EPPNodeViewSet(ViewSet):
     def retrieve(request, epp_node_id):
 
         try:
-            node_data = get_epp_node(epp_node_id)
-        except Exception as e:
-            raise NotAcceptable({"error": f"{e}"})
+            epp_node = EPPNode.objects.get(id=epp_node_id)
+        except EPPNode.DoesNotExist as e:
+            raise NotAcceptable({"error": f"El sensor no existe"})
 
-        serializer = EPPNodeSerializer(node_data, many=False)
+        serializer = EPPNodeSerializer(epp_node)
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
     @staticmethod
     def partial_update(request, epp_node_id):
-        try:
-            node_data = get_epp_node(epp_node_id)
-        except Exception as e:
-            raise NotAcceptable({"error": f"{e}"})
 
-        serializer = EPPNodeSerializer(instance=node_data, data=request.data, partial=True)
+        try:
+            epp_node = EPPNode.objects.get(id=epp_node_id)
+        except EPPNode.DoesNotExist as e:
+            raise NotAcceptable({"error": f"El sensor no existe"})
+
+        serializer = EPPNodeSerializer(instance=epp_node, data=request.data, partial=True)
 
         if serializer.is_valid():
             serializer.save()
@@ -120,10 +122,10 @@ class EPPNodeViewSet(ViewSet):
     @staticmethod
     def destroy(request, epp_node_id):
         try:
-            sensor_node = get_epp_node(epp_node_id)
-        except Exception as e:
-            raise NotAcceptable({"error": f"{e}"})
+            epp_node = EPPNode.objects.get(id=epp_node_id)
+        except EPPNode.DoesNotExist as e:
+            raise NotAcceptable({"error": f"El sensor no existe"})
 
-        sensor_node.delete()
+        epp_node.delete()
 
-        return Response({"success": f"{sensor_node.id} eliminated"}, status.HTTP_200_OK)
+        return Response({"success": f"Nodo {epp_node.id} eliminado"}, status.HTTP_200_OK)

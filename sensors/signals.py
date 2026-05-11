@@ -5,7 +5,7 @@ from django.dispatch import receiver
 from rest_framework.exceptions import NotAcceptable
 
 from sensors.models import SensorNode
-from sensors.services import get_sensor_node, send_server_credentials
+from sensors.services import  send_server_credentials
 from users.models import User
 
 

@@ -302,9 +302,3 @@ def send_server_credentials(id_device, password, esp_url, port):
 
     return response.status_code
 
-
-def get_camera_node(camera_id):
-    try:
-        return CameraNode.objects.get(id=camera_id)
-    except CameraNode.DoesNotExist:
-        raise ValueError("Node not found")
