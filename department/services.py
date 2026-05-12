@@ -24,6 +24,14 @@ def create_group(name, permissions):
     group.save()
 
 
+    add_permissions(group,permissions)
+
+    return group
+
+
+
+def add_permissions(group, permissions):
+
     for permission in permissions:
         try:
             group.permissions.add(Permission.objects.get(codename=permission))
@@ -32,6 +40,7 @@ def create_group(name, permissions):
             raise ValueError("Permission does not exist")
 
     return group
+
 
 
 def create_department(group,epp):

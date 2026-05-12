@@ -10,7 +10,7 @@ from rest_framework.viewsets import ViewSet
 from MishooEPP_Backend.permissions import permission_required
 from department.models import Department
 from department.serializer import DepartmentSerializer, DepartmentSimpleSerializer
-from department.services import create_group, create_department, get_department
+from department.services import create_group, create_department, get_department, add_permissions
 
 
 # Create your views here.
@@ -69,6 +69,8 @@ class DepartmentViewSet(ViewSet):
 
         if serializer.is_valid():
             serializer.save()
+            serializer.instance.group.permissions.clear()
+            add_permissions(serializer.instance.group, request.data["permissions"])
 
         if not serializer.is_valid():
             raise NotAcceptable({"error": f"data not valid"})

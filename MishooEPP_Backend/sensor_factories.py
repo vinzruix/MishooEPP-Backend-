@@ -62,8 +62,6 @@ class CameraNodeCreator(Creator):
         return CameraNodeProduct(node_user)
 
 
-
-
 class Product(ABC):
 
     def __init__(self, user_node: User):
