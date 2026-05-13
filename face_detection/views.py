@@ -95,15 +95,15 @@ class CameraNodeViewSet(ViewSet):
         if not serializer.is_valid():
             raise NotAcceptable()
 
-        instance = serializer.instance
-        node_password = secrets.token_urlsafe(16)
-        instance.user_node.set_password(node_password)
+        #instance = serializer.instance
+        #node_password = secrets.token_urlsafe(16)
+        #instance.user_node.set_password(node_password)
 
-        try:
-            send_server_credentials(instance.user_node.username, node_password, instance.user_node.ip,
-                                    request.get_port())
-        except ValueError as e:
-            raise NotAcceptable(f"{e}")
+        #try:
+        #    send_server_credentials(instance.user_node.username, node_password, instance.user_node.ip,
+        #                            request.get_port())
+        #except ValueError as e:
+        #    raise NotAcceptable(f"{e}")
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 

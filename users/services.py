@@ -18,8 +18,7 @@ def create_user(user, video):
     if not check_passwords(password=user['password'], password_confirmation=user['password_confirmation']):
         raise ValueError("Password does not match")
 
-    if not Group.objects.filter(name=user["department"]).exists():
-        raise ValueError("Department group does not exist")
+
 
     if not Department.objects.filter(pk=user["department"]).exists():
         raise ValueError("Department does not exist")
@@ -35,7 +34,6 @@ def create_user(user, video):
 
     worker_image = face_recognition.get_user_image_by_video(video, user['username'])
 
-    department = Department.objects.get(name=user['department'])
 
     new_user = WorkerCreator().register(name=user["name"],
                            last_name=user["last_name"],

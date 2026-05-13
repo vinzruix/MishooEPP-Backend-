@@ -35,8 +35,12 @@ class EPPNodeObtainPairSerializer(TokenObtainPairSerializer):
 
 
 class EPPNodeSerializer(serializers.ModelSerializer):
-    department = DepartmentSerializer()
 
     class Meta:
         model = EPPNode
         fields = ["id","name","is_active","ip","department"]
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        rep['department'] = DepartmentSerializer(instance.department).data
+        return rep
