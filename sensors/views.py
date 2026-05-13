@@ -106,6 +106,7 @@ class SensorNodeViewSet(ViewSet):
             serializer.save()
 
         if not serializer.is_valid():
+            print(serializer.errors)
             raise NotAcceptable()
 
         instance = serializer.instance
