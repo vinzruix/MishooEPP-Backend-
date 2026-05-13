@@ -119,7 +119,7 @@ class SensorNodeViewSet(ViewSet):
         #except ValueError as e:
             raise NotAcceptable(f"{e}")
 
-        return Response({"success:Sensor actualizado"}, status=status.HTTP_200_OK)
+        return Response({"success":"Sensor actualizado"}, status=status.HTTP_200_OK)
 
     @staticmethod
     def destroy(request, sensor_node_id):

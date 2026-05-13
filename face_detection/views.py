@@ -105,7 +105,7 @@ class CameraNodeViewSet(ViewSet):
         #except ValueError as e:
         #    raise NotAcceptable(f"{e}")
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response({"success":"Sensor actualizado"}, status=status.HTTP_200_OK)
 
     @staticmethod
     def destroy(request, camera_id):

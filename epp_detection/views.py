@@ -118,7 +118,7 @@ class EPPNodeViewSet(ViewSet):
         #except ValueError as e:
         #    raise NotAcceptable(f"{e}")
 
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response({"success":"Sensor actualizado"}, status=status.HTTP_201_CREATED)
 
     @staticmethod
     def destroy(request, epp_node_id):
