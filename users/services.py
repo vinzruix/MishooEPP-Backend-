@@ -21,7 +21,7 @@ def create_user(user, video):
     if not Group.objects.filter(name=user["department"]).exists():
         raise ValueError("Department group does not exist")
 
-    if not Department.objects.filter(name=user["department"]).exists():
+    if not Department.objects.filter(pk=user["department"]).exists():
         raise ValueError("Department does not exist")
 
     faces = face_recognition.get_encodings_by_video(video)
@@ -42,7 +42,7 @@ def create_user(user, video):
                            email=user["email"],
                            username=user["username"],
                            password=user["password"],
-                           department=department,
+                           department=Department.objects.get(pk=user["department"]),
                            faces=faces,
                            face=worker_image,
                            )
