@@ -40,11 +40,15 @@ class SensorNodeObtainPairSerializer(TokenObtainPairSerializer):
 
 
 class SensorNodeSerializer(serializers.ModelSerializer):
-    department = DepartmentSerializer()
-
     class Meta:
         model = SensorNode
         fields = ["id","name" ,"department","is_active","ip"]
+
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        rep["department"] = DepartmentSerializer(instance.department).data
+        return rep
 
 class SensorBaseSerializer(serializers.ModelSerializer):
     class Meta:
