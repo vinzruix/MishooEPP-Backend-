@@ -76,14 +76,14 @@ class Product(ABC):
         if sensor_cls.objects.filter(id=user.username).exists():
             raise ObjectAlreadyExists("Ya hay un nodo con este nombre")
 
-        if not Department.objects.filter(name=department).exists():
+        if not Department.objects.filter(pk=department).exists():
             raise ObjectAlreadyExists("No existe este departamento")
 
         new_node = sensor_cls.objects.create(
             id=user.username,
             name=name,
             ip=ip,
-            department=Department.objects.get(name=department),
+            department=Department.objects.get(pk=department),
             user_node=user,
             is_active=True,
 
