@@ -1,12 +1,14 @@
 import json
 from django.db import transaction
 from rest_framework import status
-from rest_framework.exceptions import NotAcceptable
+from rest_framework.exceptions import NotAcceptable, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
 
+from MishooEPP_Backend.exeptions import ParameterEmpty
+from MishooEPP_Backend.helpers import RequestValidatorHelper
 from MishooEPP_Backend.permissions import permission_required
 from department.models import Department
 from department.serializer import DepartmentSerializer, DepartmentSimpleSerializer
@@ -48,13 +50,17 @@ class DepartmentViewSet(ViewSet):
             "permissions": request.data.getlist("permissions")
         }
 
+
         try:
             with transaction.atomic():
+                RequestValidatorHelper.search_empty_parameters(department, excluded_keys=["permissions","epp"])
                 new_group = create_group(department["name"], department["permissions"])
                 new_department = create_department(new_group, department["epp"])
 
         except ValueError as e:
             raise NotAcceptable({"error": f"{e}"})
+        except ParameterEmpty as e:
+            raise ValidationError({"error":f"{e}"})
 
         return Response({"success": f"Departamento {new_department.name} creado"}, status=status.HTTP_201_CREATED)
 

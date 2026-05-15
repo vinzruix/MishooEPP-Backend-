@@ -13,9 +13,6 @@ def get_department(department):
 
 def create_group(name, permissions):
 
-    if not name:
-        raise ValueError("There is no name")
-
     if Group.objects.filter(name=name).exists():
         raise ValueError("Group name already exist")
 

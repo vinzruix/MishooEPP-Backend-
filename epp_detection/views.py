@@ -3,7 +3,7 @@ import uuid
 from django.db import transaction
 from django.utils.datastructures import MultiValueDictKeyError
 from rest_framework import status
-from rest_framework.exceptions import NotAcceptable
+from rest_framework.exceptions import NotAcceptable, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -11,7 +11,9 @@ from rest_framework.viewsets import ViewSet
 from rest_framework_simplejwt.views import TokenObtainPairView
 from scipy.linalg import rq
 
-from MishooEPP_Backend.exeptions import ObjectDoesNotExist, ObjectAlreadyExists, ServerDown, ServerBadResponse
+from MishooEPP_Backend.exeptions import ObjectDoesNotExist, ObjectAlreadyExists, ServerDown, ServerBadResponse, \
+    ParameterEmpty
+from MishooEPP_Backend.helpers import RequestValidatorHelper
 from MishooEPP_Backend.permissions import permission_required
 from MishooEPP_Backend.sensor_factories import SensorNodeCreator, EPPNodeCreator
 from epp_detection.models import EPPNode
@@ -53,9 +55,15 @@ class EPPNodeViewSet(ViewSet):
                 "ip": request.data["ip"],
             }
 
+
+            RequestValidatorHelper.search_empty_parameters(node)
+
             creator = EPPNodeCreator()
             product = creator.create(node["name"], node["ip"],node["department"])
             product.send_server_credentials(request.get_port(),"/Auth/api/credentials/epp_node/",request.auth)
+
+        except ParameterEmpty as e:
+            raise ValidationError({"error": f"{e}"})
 
         except (ObjectDoesNotExist, ObjectAlreadyExists) as e:
             raise NotAcceptable({"error":f"{e}"})
@@ -64,8 +72,7 @@ class EPPNodeViewSet(ViewSet):
             product.delete_objects()
             raise NotAcceptable({"error":f"{e}"})
 
-        except MultiValueDictKeyError as e:
-            raise NotAcceptable({"error": f"Dato faltante: {e}"})
+
 
         return Response({"success":"Sensor creado"}, status=status.HTTP_201_CREATED)
 
@@ -127,6 +134,7 @@ class EPPNodeViewSet(ViewSet):
         except EPPNode.DoesNotExist as e:
             raise NotAcceptable({"error": f"El sensor no existe"})
 
+        epp_node.user_node.delete()
         epp_node.delete()
 
         return Response({"success": f"Nodo {epp_node.id} eliminado"}, status.HTTP_200_OK)
