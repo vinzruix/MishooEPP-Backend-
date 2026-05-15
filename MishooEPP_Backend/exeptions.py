@@ -9,3 +9,6 @@ class ServerDown(BaseException):
 
 class ServerBadResponse(BaseException):
     pass
+
+class ParameterEmpty(BaseException):
+    pass

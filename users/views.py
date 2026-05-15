@@ -10,6 +10,8 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from MishooEPP_Backend.exeptions import ParameterEmpty
+from MishooEPP_Backend.helpers import RequestValidatorHelper
 from face_detection.exeptions import UserRegistered
 from users.models import User
 from MishooEPP_Backend.permissions import permission_required
@@ -56,20 +58,21 @@ class UserViewSet(ViewSet):
             }
 
         except MultiValueDictKeyError as e:
-            raise NotAcceptable({"error": f"Valor vacio {e}"})
-
-        for key, value in user.items():
-            if not value:
-                raise NotAcceptable({"error": f"Parametro: {key} vacio"})
+            raise NotAcceptable({"error": f"Parametro {e} vacio"})
 
         try:
             with transaction.atomic():
+
+                RequestValidatorHelper.search_empty_parameters(user)
                 create_user(user, video)
 
-        except (UserRegistered, ValueError) as e:
-            raise ValidationError({"error": f"{e}"})
         except PermissionError as e:
             raise NotAcceptable({"error": f"{e}"})
+
+        except (UserRegistered, ValueError, ParameterEmpty) as e:
+            raise ValidationError({"error": f"{e}"})
+
+
 
         return Response({"success": "Usuario creado"}, status=status.HTTP_201_CREATED)
 
