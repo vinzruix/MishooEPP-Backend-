@@ -4,6 +4,7 @@ from symtable import Class
 from django.db import models
 
 from MishooEPP_Backend.core.models import Node
+from department.models import Department
 from users.models import User
 
 
@@ -17,6 +18,7 @@ class SensorNode(Node):
         ]
 
     user_node = models.OneToOneField(User, related_name="sensor_nodes", on_delete=models.CASCADE, null=True)
+    department = models.ForeignKey(Department, related_name="sensor_nodes", on_delete=models.CASCADE)
 
 
 class BaseDataSensor(models.Model):
@@ -30,7 +32,8 @@ class BaseDataSensor(models.Model):
 class Temperature(BaseDataSensor):
     class Meta:
         permissions = [
-            ("view_all_sensor", "Can view all the sensors")
+            ("view_all_sensor", "Can view all the sensors"),
+            ("create_data_sensor", "Can create new data in sensor")
         ]
 
     node = models.ForeignKey(SensorNode, related_name="temperature_data", on_delete=models.CASCADE, null=True)

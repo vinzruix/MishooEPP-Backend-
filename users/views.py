@@ -5,10 +5,14 @@ from django.utils.datastructures import MultiValueDictKeyError
 from rest_framework.exceptions import NotFound, NotAcceptable, ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.status import HTTP_201_CREATED
+from rest_framework import status
 from rest_framework.views import APIView
+from rest_framework.viewsets import ViewSet
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from MishooEPP_Backend.exeptions import ParameterEmpty
+from MishooEPP_Backend.helpers import RequestValidatorHelper
+from face_detection.exeptions import UserRegistered
 from users.models import User
 from MishooEPP_Backend.permissions import permission_required
 from users.serializers import UserSerializer, CustomTokenObtainPairSerializer
@@ -19,18 +23,27 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
 
-class UserListCreateAPIView(APIView):
+
+class UserViewSet(ViewSet):
 
     def get_permissions(self):
-        if self.request.method == "GET":
+        if self.action == "list":
             return [permission_required("users.view_all_user")()]
 
-        if self.request.method == "POST":
+        if self.action == "create":
             return [permission_required("users.create_user")()]
 
         return [IsAuthenticated()]
 
-    def post(self, request):
+
+    @staticmethod
+    def list(request):
+        user = User.objects.filter(is_device=False, is_staff=False)
+        serializer = UserSerializer(user, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @staticmethod
+    def create(request):
 
         try:
             video = request.FILES['video']
@@ -45,45 +58,32 @@ class UserListCreateAPIView(APIView):
             }
 
         except MultiValueDictKeyError as e:
-            raise NotAcceptable({"error": f"value missing {e}"})
+            raise NotAcceptable({"error": f"Parametro {e} vacio"})
 
-
-        for key, value in user.items():
-            if not value:
-                raise NotAcceptable({"error": f"Parameter empty:{key}"})
-    
         try:
             with transaction.atomic():
-    
-                temp_file = tempfile.NamedTemporaryFile(delete=False)
-    
-                for chunk in video.chunks():
-                    temp_file.write(chunk)
-    
-                temp_file.close()
-    
-                create_user(user, temp_file.name)
-    
-        except ValueError as e:
-            raise ValidationError({"error": f"{e}"})
+
+                RequestValidatorHelper.search_empty_parameters(user)
+                create_user(user, video)
+
         except PermissionError as e:
             raise NotAcceptable({"error": f"{e}"})
-    
-        return Response({"success": "Usuario creado"}, status=HTTP_201_CREATED)
+
+        except (UserRegistered, ValueError, ParameterEmpty) as e:
+            raise ValidationError({"error": f"{e}"})
 
 
-    def get(self, request):
-        user = User.objects.all()
-        serializer = UserSerializer(user, many=True)
-        return Response(serializer.data)
 
+        return Response({"success": "Usuario creado"}, status=status.HTTP_201_CREATED)
 
-class UserDetailAPIView(APIView):
+    @staticmethod
+    def retrieve(request, pk):
 
-    def get(self, request, pk):
         try:
             user = User.objects.get(pk=pk)
-            serializer = UserSerializer(user)
-            return Response(serializer.data)
         except User.DoesNotExist:
-            raise NotFound({"error": "User does not exist"})
+            raise NotFound({"error": "El usuario no existe"})
+
+        serializer = UserSerializer(user)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)

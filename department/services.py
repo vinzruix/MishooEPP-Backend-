@@ -3,10 +3,15 @@ from django.contrib.auth.models import Group, Permission
 from department.models import Department
 
 
-def create_group(name, permissions):
 
-    if not name:
-        raise ValueError("There is no name")
+def get_department(department):
+    try:
+        return Department.objects.get(id=department)
+    except Department.DoesNotExist:
+        raise ValueError("Department does not exist")
+
+
+def create_group(name, permissions):
 
     if Group.objects.filter(name=name).exists():
         raise ValueError("Group name already exist")
@@ -16,6 +21,14 @@ def create_group(name, permissions):
     group.save()
 
 
+    add_permissions(group,permissions)
+
+    return group
+
+
+
+def add_permissions(group, permissions):
+
     for permission in permissions:
         try:
             group.permissions.add(Permission.objects.get(codename=permission))
@@ -24,6 +37,7 @@ def create_group(name, permissions):
             raise ValueError("Permission does not exist")
 
     return group
+
 
 
 def create_department(group,epp):

@@ -3,9 +3,8 @@ from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import AuthUser, TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import Token
-from sympy import false
-from sympy.physics.units import temperature
 
+from department.serializer import  DepartmentSerializer
 from sensors.models import Temperature, Humidity, Pressure, CO2, TVOC, SensorNode
 
 
@@ -14,7 +13,8 @@ class SensorNodeObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs: dict[str, Any]) -> dict[Any, Any]:
         try:
             data = super().validate(attrs)
-        except Exception:
+        except Exception as e:
+            print(e)
             raise AuthenticationFailed({"error":"invalid credentials"})
 
         
@@ -42,7 +42,13 @@ class SensorNodeObtainPairSerializer(TokenObtainPairSerializer):
 class SensorNodeSerializer(serializers.ModelSerializer):
     class Meta:
         model = SensorNode
-        fields = ["id","name","location","is_active","ip"]
+        fields = ["id","name" ,"department","is_active","ip"]
+
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        rep["department"] = DepartmentSerializer(instance.department).data
+        return rep
 
 class SensorBaseSerializer(serializers.ModelSerializer):
     class Meta:

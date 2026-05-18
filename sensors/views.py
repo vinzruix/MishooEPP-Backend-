@@ -1,19 +1,26 @@
 import secrets
 import uuid
+
 from django.db import transaction
 from django.utils.datastructures import MultiValueDictKeyError
 from rest_framework import status
-from rest_framework.exceptions import NotAcceptable
+from rest_framework.exceptions import NotAcceptable, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.viewsets import ViewSet
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from MishooEPP_Backend.exeptions import ObjectAlreadyExists, ServerBadResponse, ServerDown, ObjectDoesNotExist, \
+    ParameterEmpty
+from MishooEPP_Backend.helpers import RequestValidatorHelper
 from MishooEPP_Backend.permissions import permission_required
+from MishooEPP_Backend.sensor_factories import SensorNodeCreator
 from sensors.models import Temperature, Humidity, CO2, TVOC, Pressure, SensorNode
 from sensors.serializers import TemperatureSerializer, HumiditySerializer, PressureSerializer, CO2Serializer, \
     TVOCSerializer, SensorNodeObtainPairSerializer, SensorNodeSerializer, SensorDataSerializer
-from sensors.services import ping_url, create_user_node, create_sensor_node, send_server_credentials
+from sensors.services import ping_url, create_user_node, create_sensor_node, send_server_credentials, \
+    create_all_sensor_data
 
 
 # Create your views here.
@@ -22,87 +29,143 @@ class SensorNodeObtainPairSerializerAPIView(TokenObtainPairView):
     serializer_class = SensorNodeObtainPairSerializer
 
 
-class SensorNodeCreateAPIView(APIView):
+class SensorNodeViewSet(ViewSet):
 
     def get_permissions(self):
-        if self.request == "POST":
+        if self.action == "create":
             return [permission_required("sensors.create_sensor")()]
 
-        if self.request == "GET":
+        if self.action== "partial_update":
+            return [permission_required("sensors.create_sensor")()]
+
+        if self.action== "list":
             return [permission_required("sensors.view_all_sensor")()]
+
+        if self.action == "destroy":
+            return [permission_required("sensors.create_sensor")()]
+
+        if self.action == "retrieve":
+            return [permission_required("sensors.view_all_sensor")()]
+
         return [IsAuthenticated()]
 
-
-    def post(self, request):
-        
+    # noinspection PyUnboundLocalVariable
+    @staticmethod
+    def create(request):
         try:
+
             node = {
                 "name": request.data["name"],
-                "location": request.data["location"],
+                "department": request.data["department"],
                 "ip": request.data["ip"],
             }
 
-        except MultiValueDictKeyError as e:
-            raise NotAcceptable({"error":f"value missing {e}"})
+            RequestValidatorHelper.search_empty_parameters(node)
 
+            creator = SensorNodeCreator()
+            product = creator.create(node["name"], node["ip"], node["department"])
+            product.send_server_credentials(request.get_port(), "/Auth/api/credentials/sensor_node/", request.auth)
+
+        except (ObjectDoesNotExist, ObjectAlreadyExists) as e:
+            raise NotAcceptable({"error": f"{e}"})
+
+        except (ServerDown, ServerBadResponse) as e:
+            product.delete_objects()
+            raise NotAcceptable({"error": f"{e}"})
+
+        except ParameterEmpty as e:
+            raise ValidationError({"error": f"{e}"})
+
+
+        return Response({"success": "Sensor creado"}, status=status.HTTP_201_CREATED)
+
+    @staticmethod
+    def list(request):
+        node_data = SensorNode.objects.all().order_by("-id")
+        serializer = SensorNodeSerializer(node_data, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+    @staticmethod
+    def retrieve(request, sensor_node_id):
 
         try:
-            with transaction.atomic():
-           #     ping_url(node["ip"])
+            sensor_node = SensorNode.objects.get(id=sensor_node_id)
+        except SensorNode.DoesNotExist:
+            raise NotAcceptable({"error": f"El sensor no existe"})
 
-                node_username = uuid.uuid4()
-                node_password = secrets.token_urlsafe(16)
 
-                node_user = create_user_node(node_username, node_password)
+        serializer = SensorNodeSerializer(sensor_node, many=False)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-                create_sensor_node(request.data["name"], request.data["location"], request.data["ip"], node_user)
+    @staticmethod
+    def partial_update(request, sensor_node_id):
+        try:
+            sensor_node = SensorNode.objects.get(id=sensor_node_id)
+        except SensorNode.DoesNotExist:
+            raise NotAcceptable({"error": f"El sensor no existe"})
 
-                send_server_credentials(node_username, node_password, request.data["ip"])
+        serializer = SensorNodeSerializer(instance=sensor_node, data=request.data, partial=True)
 
-        except ValueError as e:
-            raise NotAcceptable({"error":f"{e}"})
-            
+        if serializer.is_valid():
+            serializer.save()
 
-        return Response({"success": f"Sensor creado"})
+        if not serializer.is_valid():
+            print(serializer.errors)
+            raise NotAcceptable()
 
-    def get(self,request):
-        node_data = SensorNode.objects.last()
-        serializer = SensorNodeSerializer(node_data,many=False)
-        return Response(serializer.data)
+        #instance = serializer.instance
+        #node_password = secrets.token_urlsafe(16)
+        #instance.user_node.set_password(node_password)
+
+        #try:
+        #    send_server_credentials(instance.user_node.username, node_password, instance.user_node.ip,
+        #                            request.get_port())
+        #except ValueError as e:
+            raise NotAcceptable(f"{e}")
+
+        return Response({"success":"Sensor actualizado"}, status=status.HTTP_200_OK)
+
+    @staticmethod
+    def destroy(request, sensor_node_id):
+
+        try:
+            sensor_node =  SensorNode.objects.get(id=sensor_node_id)
+        except SensorNode.DoesNotExist as e:
+            raise NotAcceptable({"error": f"El sensor no existe"})
+
+        sensor_node.user_node.delete()
+        sensor_node.delete()
+
+
+
+
+        return Response({"success": f"{sensor_node.id} eliminated"}, status.HTTP_200_OK)
 
 
 class SensorsDataCreateAPIView(APIView):
 
     def get_permissions(self):
-        if self.request.method == "GET":
-            return [permission_required("sensors.view_all_sensor")()]
 
         if self.request.method == "POST":
-            return [permission_required("sensors.create_sensor")()]
+            return [permission_required("sensors.create_data_sensor")()]
 
         return [IsAuthenticated()]
 
-    def post(self, request):
-        temp_value = request.POST['temp']
-        hum_value = request.POST['hum']
-        # press_value = request.POST["press"]
-        co2_value = request.POST["eco2"]
-        tvoc_value = request.POST["tvoc"]
-
-
+    @staticmethod
+    def post(request):
         try:
-            with transaction.atomic():
-
-                Temperature.objects.create(value=temp_value, node=request.user.sensor_nodes)
-                Humidity.objects.create(value=hum_value, node=request.user.sensor_nodes)
-                CO2.objects.create(value=co2_value, node=request.user.sensor_nodes)
-                TVOC.objects.create(value=tvoc_value, node=request.user.sensor_nodes)
-
+            create_all_sensor_data(
+                request.user,
+                request.POST["temp"],
+                request.POST["hum"],
+                request.POST["eco2"],
+                request.POST["tvoc"],
+            )
         except Exception as e:
-            raise NotAcceptable({"error":f"{e}"})
+            raise NotAcceptable({"error": f"{e}"})
 
-        return Response(status=status.HTTP_201_CREATED)
-
+        return Response({"success": "Data saved"}, status=status.HTTP_201_CREATED)
 
 
 class SensorDataDetailAPIView(APIView):
@@ -112,16 +175,16 @@ class SensorDataDetailAPIView(APIView):
 
         return [IsAuthenticated()]
 
-    def get(self,request,sensor_node):
+    @staticmethod
+    def get(request, sensor_node_id):
 
         try:
-            node_data = SensorNode.objects.get(id=sensor_node)
-        except Exception as e:
-            raise NotAcceptable({"error":f"{e}"})
+            node_data = SensorNode.objects.get(id=sensor_node_id)
+        except SensorNode.DoesNotExist:
+            raise NotAcceptable({"error": f"El sensor no existe"})
 
-
-        serializer = SensorDataSerializer(node_data,many=False)
-        return Response(serializer.data)
+        serializer = SensorDataSerializer(node_data, many=False)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class BaseSensorListAPIView(APIView):

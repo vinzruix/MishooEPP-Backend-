@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     'attendance',
     'epp_detection',
     'department',
+    'incidence',
 ]
 
 MIDDLEWARE = [
@@ -108,7 +109,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME' : 'mishooepp',
         'USER' : 'yairtejedahotmail.com',
-        'PASSWORD' : '',
+        'PASSWORD' : '1',
         'HOST' : 'localhost',
         'PORT' : '',
     }

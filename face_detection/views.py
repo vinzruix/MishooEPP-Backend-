@@ -1,46 +1,124 @@
-import io
-
-import cv2
-import numpy as np
-from PIL import Image
-from django.core.files.base import ContentFile
-from django.http import UnreadablePostError
-from rest_framework.exceptions import NotAcceptable, NotFound, Throttled, UnsupportedMediaType
+import secrets
+import uuid
+from django.db import transaction
+from django.utils.datastructures import MultiValueDictKeyError
+from rest_framework import status
+from rest_framework.exceptions import NotAcceptable, ValidationError
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.viewsets import ViewSet
+from rest_framework_simplejwt.views import TokenObtainPairView
 
-from attendance.services import register_attendance_successfully
-from face_detection.services import find_worker, search_face_in_image, obtain_encoding_ready_to_use, \
-    obtain_image_buffer_from_nparray
+from MishooEPP_Backend.exeptions import ObjectDoesNotExist, ObjectAlreadyExists, ServerDown, ServerBadResponse, \
+    ParameterEmpty
+from MishooEPP_Backend.helpers import RequestValidatorHelper
+from MishooEPP_Backend.permissions import permission_required
+from MishooEPP_Backend.sensor_factories import CameraNodeCreator
+from face_detection.models import CameraNode
+from face_detection.serializers import CameraNodeObtainPairSerializer, CameraNodeSerializer
+from face_detection.services import create_camera_node, send_server_credentials
+from sensors.services import create_user_node
 
 
-class FaceDetectionCreateAPIView(APIView):
+class CameraNodeObtainPairSerializerAPIView(TokenObtainPairView):
+    serializer_class = CameraNodeObtainPairSerializer
 
 
-    def post(self,request):
+class CameraNodeViewSet(ViewSet):
 
+    def get_permissions(self):
+        if self.action == "create":
+            return [permission_required("sensors.create_sensor")()]
+
+        if self.action == "partial_update":
+            return [permission_required("sensors.create_sensor")()]
+
+        if self.action == "destroy":
+            return [permission_required("sensors.create_sensor")()]
+        return [IsAuthenticated()]
+
+    # noinspection PyUnboundLocalVariable
+    @staticmethod
+    def create(request):
         try:
-            frame = cv2.imdecode(np.frombuffer(request.body, np.uint8), cv2.IMREAD_COLOR)
-        except UnreadablePostError as e:
-            raise UnsupportedMediaType("The media was not found")
 
+            node = {
+                "name": request.data["name"],
+                "department": request.data["department"],
+                "ip": request.data["ip"],
+            }
 
-        try:
-            locations = search_face_in_image(frame)
-        except ValueError as e:
+            RequestValidatorHelper.search_empty_parameters(node)
+
+            creator = CameraNodeCreator()
+            product = creator.create(node["name"], node["ip"], node["department"])
+            product.send_server_credentials(request.get_port(), "/Auth/api/credentials/camera_node/", request.auth)
+
+        except (ObjectDoesNotExist, ObjectAlreadyExists) as e:
             raise NotAcceptable({"error": f"{e}"})
 
+        except (ServerDown, ServerBadResponse) as e:
+            product.delete_objects()
+            raise NotAcceptable({"error": f"{e}"})
 
-        encodings = obtain_encoding_ready_to_use(frame, locations)
+        except ParameterEmpty as e:
+            raise ValidationError({"error": f"{e}"})
 
-        worker = find_worker(encodings)
+        return Response({"success": "Sensor creado"}, status=status.HTTP_201_CREATED)
 
+    @staticmethod
+    def list(request):
+        node_data = CameraNode.objects.all().order_by("-id")
+        serializer = CameraNodeSerializer(node_data, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-        if worker:
-            image = obtain_image_buffer_from_nparray(frame,f"{worker.username}")
-            register_attendance_successfully(worker, image)
+    @staticmethod
+    def retrieve(request, camera_id):
 
-            return Response({"success": f"user identified as {worker.first_name}"})
+        try:
+            camera_node = CameraNode.objects.get(id=camera_id)
+        except CameraNode.DoesNotExist as e:
+            raise NotAcceptable({"error": f"El sensor no existe"})
 
-        raise NotFound({"error":f"User not identified"})
+        serializer = CameraNodeSerializer(camera_node, many=False)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @staticmethod
+    def partial_update(request, camera_id):
+        try:
+            camera_node = CameraNode.objects.get(id=camera_id)
+        except CameraNode.DoesNotExist as e:
+            raise NotAcceptable({"error": f"El sensor no existe"})
+
+        serializer = CameraNodeSerializer(instance=camera_node, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+
+        if not serializer.is_valid():
+            raise NotAcceptable()
+
+        #instance = serializer.instance
+        #node_password = secrets.token_urlsafe(16)
+        #instance.user_node.set_password(node_password)
+
+        #try:
+        #    send_server_credentials(instance.user_node.username, node_password, instance.user_node.ip,
+        #                            request.get_port())
+        #except ValueError as e:
+        #    raise NotAcceptable(f"{e}")
+
+        return Response({"success":"Sensor actualizado"}, status=status.HTTP_200_OK)
+
+    @staticmethod
+    def destroy(request, camera_id):
+        try:
+            camera_node = CameraNode.objects.get(id=camera_id)
+        except CameraNode.DoesNotExist:
+            raise NotAcceptable({"error": f"El sensor no existe"})
+
+        camera_node.user_node.delete()
+        camera_node.delete()
+
+        return Response({"success": f"Sensor {camera_node.id} eliminado"}, status.HTTP_200_OK)

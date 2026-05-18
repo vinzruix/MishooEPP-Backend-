@@ -1,8 +1,9 @@
 from django.contrib.auth.models import Group
-from rest_framework.exceptions import ValidationError, NotAcceptable
 
+from MishooEPP_Backend.core.instances import face_recognition
 from department.models import Department
-from face_detection.services import obtain_tensors_by_video, obtain_worker_image_by_video, find_worker
+from face_detection.exeptions import UserRegistered
+from users.factory import WorkerCreator
 from users.models import User
 
 
@@ -17,50 +18,39 @@ def create_user(user, video):
     if not check_passwords(password=user['password'], password_confirmation=user['password_confirmation']):
         raise ValueError("Password does not match")
 
-    if not Group.objects.filter(name=user["department"]).exists():
-        raise ValueError("Department group does not exist")
 
-    if not Department.objects.filter(name=user["department"]).exists():
+
+    if not Department.objects.filter(pk=user["department"]).exists():
         raise ValueError("Department does not exist")
 
-
-
-
-    faces = obtain_tensors_by_video(video)
+    faces = face_recognition.get_encodings_by_video(video)
 
     if not faces:
         raise ValueError("No faces detected")
 
-    if find_worker(faces[0]) != -1:
-        raise PermissionError("Human already registered")
+    for face in faces:
+        if  face_recognition.is_user_registered(face):
+            raise UserRegistered("User already registered")
 
-    worker_image = obtain_worker_image_by_video(video, user['username'])
-
-    department = Department.objects.get(name=user['department'])
-    new_user = User()
-
-    new_user.first_name = user['name']
-    new_user.last_name = user['last_name']
-    new_user.email = user['email']
-    new_user.username = user['username']
-    new_user.set_password(user['password'])
-
-    new_user.department = department
-    new_user.tensor_faces = faces
-    new_user.face = worker_image
-
-    new_user.save()
-
-    new_user.groups.add(department.group)
+    worker_image = face_recognition.get_user_image_by_video(video, user['username'])
 
 
-
+    new_user = WorkerCreator().register(name=user["name"],
+                           last_name=user["last_name"],
+                           email=user["email"],
+                           username=user["username"],
+                           password=user["password"],
+                           department=Department.objects.get(pk=user["department"]),
+                           faces=faces,
+                           face=worker_image,
+                           )
 
     return new_user
 
 
-def check_passwords(password,password_confirmation):
+def check_passwords(password, password_confirmation):
     if password_confirmation == password:
         return True
 
     return False
+

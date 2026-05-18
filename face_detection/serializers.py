@@ -1,0 +1,51 @@
+from typing import Any
+
+from rest_framework import serializers
+from rest_framework.authtoken.models import Token
+from rest_framework_simplejwt.exceptions import AuthenticationFailed
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, AuthUser
+
+from department.serializer import DepartmentSerializer, DepartmentSimpleSerializer
+from face_detection.models import CameraNode
+
+
+class CameraNodeObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs: dict[str, Any]) -> dict[Any, Any]:
+        try:
+            data = super().validate(attrs)
+        except Exception as e:
+            raise AuthenticationFailed({"error": "invalid credentials"})
+
+
+        if not CameraNode.objects.filter(user_node=self.user).exists():
+            raise AuthenticationFailed({"error": "invalid credentials"})
+
+        node = CameraNode.objects.get(user_node=self.user)
+
+        if not node.is_active:
+            raise AuthenticationFailed({"error": "device not active"})
+
+        return data
+
+    @classmethod
+    def get_token(cls, user: AuthUser) -> Token:
+        token = super().get_token(user)
+        token['is_device'] = True
+        token['id_node'] = user.username
+        token['department'] = DepartmentSerializer(user.camera_nodes.department).data
+        return token
+
+
+
+
+class CameraNodeSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = CameraNode
+        fields = ["id","name","department","is_active", "ip"]
+
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        rep["department"] = DepartmentSerializer(instance.department).data
+        return rep
