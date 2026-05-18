@@ -7,6 +7,7 @@ from MishooEPP_Backend.core.instances import face_recognition
 from MishooEPP_Backend.permissions import permission_required
 from attendance.models import WorkerArrival
 from attendance.serializers import WorkerArrivalSerializer
+from attendance.services import deny_door_access, allow_door_access
 from face_detection.exeptions import UserNotRegistered, NumFaceError, NoFacesData
 
 
@@ -29,6 +30,7 @@ class AttendanceViewSet(ViewSet):
         except (NumFaceError, NoFacesData) as e:
             raise NotAcceptable({"error": f"{e}"})
         except UserNotRegistered as e:
+            deny_door_access()
             raise NotFound({"error": f"{e}"})
 
 
@@ -46,6 +48,7 @@ class AttendanceViewSet(ViewSet):
             raise NotAcceptable()
 
         if serializer.is_valid():
+            allow_door_access()
             serializer.save()
 
         return Response({"success": f"Usuario identificado como {worker.first_name}"}, status=status.HTTP_201_CREATED)
